@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ArabicSchoolArchive.Api/ArabicSchoolArchive.Api.csproj" />
+  <Project Path="ArabicSchoolArchive.Tests/ArabicSchoolArchive.Tests.csproj" />
+</Solution>

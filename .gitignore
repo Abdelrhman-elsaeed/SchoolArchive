@@ -1,0 +1,81 @@
+## .NET / Visual Studio gitignore
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Ll]og/
+[Ll]ogs/
+[Oo]bj/
+[Oo]ut/
+*.user
+*.suo
+*.userprefs
+*.sln.docstates
+*.userosscache
+*.sln.ide
+
+# Visual Studio
+.vs/
+.vscode/
+*.code-workspace
+.history/
+*.ncrunchsolution
+*.swp
+*.swo
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+# Test results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage*.info
+TestResult*.xml
+coverage.xml
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage*.info
+
+# ASP.NET / EF Core
+*.mdf
+*.ldf
+*.ndf
+App_Data/
+appsettings.*.local.json
+appsettings.Local.json
+secrets.json
+
+# Rider
+.idea/
+*.sln.iml
+
+# Misc
+*.cache
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+node_modules/
+.DS_Store
+Thumbs.db
