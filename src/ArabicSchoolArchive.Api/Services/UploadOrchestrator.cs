@@ -12,31 +12,43 @@ public interface IUploadOrchestrator
         Guid schoolId,
         Guid userId,
         CancellationToken cancellationToken);
+
+    Task<BatchUploadResponse> UploadBatchAsync(
+        IReadOnlyList<IFormFile> files,
+        Guid schoolId,
+        Guid userId,
+        CancellationToken cancellationToken);
 }
 
 public sealed class UploadOrchestrator : IUploadOrchestrator
 {
     private readonly IFileValidator _validator;
+    private readonly IFileSignatureValidator _signatureValidator;
     private readonly IN8nClient _n8nClient;
     private readonly IBlobStorageService _blobService;
     private readonly IArchiveRepository _repository;
+    private readonly IAuditLog _auditLog;
     private readonly UploadOptions _options;
     private readonly ILogger<UploadOrchestrator> _logger;
     private readonly TimeProvider _timeProvider;
 
     public UploadOrchestrator(
         IFileValidator validator,
+        IFileSignatureValidator signatureValidator,
         IN8nClient n8nClient,
         IBlobStorageService blobService,
         IArchiveRepository repository,
+        IAuditLog auditLog,
         IOptions<UploadOptions> options,
         ILogger<UploadOrchestrator> logger,
         TimeProvider timeProvider)
     {
         _validator = validator;
+        _signatureValidator = signatureValidator;
         _n8nClient = n8nClient;
         _blobService = blobService;
         _repository = repository;
+        _auditLog = auditLog;
         _options = options.Value;
         _logger = logger;
         _timeProvider = timeProvider;
@@ -53,6 +65,16 @@ public sealed class UploadOrchestrator : IUploadOrchestrator
         var validation = _validator.Validate(file, _options);
         if (!validation.IsValid)
         {
+            _auditLog.Record(new AuditEvent
+            {
+                Action = AuditAction.Upload,
+                Outcome = AuditOutcome.Rejected,
+                ReasonCode = validation.ReasonCode,
+                Message = validation.Message,
+                SchoolId = schoolId,
+                UserId = userId,
+                OriginalName = originalName
+            });
             return new SingleFileUploadResponse
             {
                 OriginalName = originalName,
@@ -78,6 +100,36 @@ public sealed class UploadOrchestrator : IUploadOrchestrator
         }
         n8nStream.Position = 0;
 
+        var signature = await _signatureValidator.ValidateAsync(
+            n8nStream, originalName, mimeType, cancellationToken);
+        if (!signature.IsValid)
+        {
+            _auditLog.Record(new AuditEvent
+            {
+                Action = AuditAction.Upload,
+                Outcome = AuditOutcome.Rejected,
+                ReasonCode = signature.ReasonCode,
+                Message = signature.Message,
+                SchoolId = schoolId,
+                UserId = userId,
+                OriginalName = originalName,
+                DocumentId = documentId
+            });
+            return new SingleFileUploadResponse
+            {
+                OriginalName = originalName,
+                Status = nameof(UploadStatus.Rejected),
+                ReasonCode = signature.ReasonCode,
+                Message = signature.Message ?? "توقيع الملف غير صالح",
+                DocumentId = null,
+                Category = null,
+                SizeBytes = file.Length,
+                MimeType = mimeType,
+                BlobUri = null
+            };
+        }
+        n8nStream.Position = 0;
+
         var n8nResult = await _n8nClient.ClassifyAsync(
             n8nStream, originalName, mimeType, schoolId, documentId, cancellationToken);
         if (!n8nResult.Success)
@@ -85,6 +137,17 @@ public sealed class UploadOrchestrator : IUploadOrchestrator
             _logger.LogWarning(
                 "n8n classification failed: DocumentId={DocumentId} SchoolId={SchoolId} Reason={Reason}",
                 documentId, schoolId, n8nResult.ReasonCode);
+            _auditLog.Record(new AuditEvent
+            {
+                Action = AuditAction.Upload,
+                Outcome = AuditOutcome.Failed,
+                ReasonCode = n8nResult.ReasonCode,
+                Message = TranslateN8nFailure(n8nResult.ReasonCode),
+                SchoolId = schoolId,
+                UserId = userId,
+                DocumentId = documentId,
+                OriginalName = originalName
+            });
             return new SingleFileUploadResponse
             {
                 OriginalName = originalName,
@@ -99,14 +162,25 @@ public sealed class UploadOrchestrator : IUploadOrchestrator
             };
         }
 
-        n8nStream.Position = 0;
+        await using var blobStream = file.OpenReadStream();
         var blobResult = await _blobService.UploadAsync(
-            schoolId, documentId, originalName, mimeType, n8nStream, uploadedAt, cancellationToken);
+            schoolId, documentId, originalName, mimeType, blobStream, uploadedAt, cancellationToken);
         if (!blobResult.Success)
         {
             _logger.LogWarning(
                 "Blob upload failed: DocumentId={DocumentId} SchoolId={SchoolId} Reason={Reason}",
                 documentId, schoolId, blobResult.FailureReason);
+            _auditLog.Record(new AuditEvent
+            {
+                Action = AuditAction.Upload,
+                Outcome = AuditOutcome.Failed,
+                ReasonCode = "BLOB_FAILED",
+                Message = blobResult.FailureReason,
+                SchoolId = schoolId,
+                UserId = userId,
+                DocumentId = documentId,
+                OriginalName = originalName
+            });
             return new SingleFileUploadResponse
             {
                 OriginalName = originalName,
@@ -131,6 +205,11 @@ public sealed class UploadOrchestrator : IUploadOrchestrator
             SizeBytes = file.Length,
             MimeType = mimeType,
             Category = n8nResult.Category,
+            DisplayName = n8nResult.DisplayName,
+            Summary = n8nResult.Summary,
+            Tags = n8nResult.Tags?.ToList() ?? new List<string>(),
+            Confidence = n8nResult.Confidence,
+            NeedsReview = n8nResult.NeedsReview,
             UploadedByUserId = userId,
             UploadedAtUtc = uploadedAt,
             ProcessingYear = uploadedAt.Year,
@@ -147,6 +226,16 @@ public sealed class UploadOrchestrator : IUploadOrchestrator
             _logger.LogError(ex,
                 "DB save failed after Blob success: DocumentId={DocumentId} SchoolId={SchoolId}. Blob orphan possible.",
                 documentId, schoolId);
+            _auditLog.Record(new AuditEvent
+            {
+                Action = AuditAction.Upload,
+                Outcome = AuditOutcome.Failed,
+                ReasonCode = "DB_FAILED",
+                SchoolId = schoolId,
+                UserId = userId,
+                DocumentId = documentId,
+                OriginalName = originalName
+            });
             return new SingleFileUploadResponse
             {
                 OriginalName = originalName,
@@ -164,6 +253,15 @@ public sealed class UploadOrchestrator : IUploadOrchestrator
         _logger.LogInformation(
             "Archive success: DocumentId={DocumentId} SchoolId={SchoolId} Size={Size} Category={Category}",
             documentId, schoolId, file.Length, n8nResult.Category);
+        _auditLog.Record(new AuditEvent
+        {
+            Action = AuditAction.Upload,
+            Outcome = AuditOutcome.Success,
+            SchoolId = schoolId,
+            UserId = userId,
+            DocumentId = documentId,
+            OriginalName = originalName
+        });
 
         return new SingleFileUploadResponse
         {
@@ -188,4 +286,61 @@ public sealed class UploadOrchestrator : IUploadOrchestrator
         "N8N_INVALID_RESPONSE" => "استجابة غير صالحة من خدمة التصنيف. يرجى المحاولة لاحقاً",
         _ => "فشل تصنيف الملف. يرجى المحاولة لاحقاً"
     };
+
+    public async Task<BatchUploadResponse> UploadBatchAsync(
+        IReadOnlyList<IFormFile> files,
+        Guid schoolId,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var results = new List<SingleFileUploadResponse>(files.Count);
+        foreach (var file in files)
+        {
+            try
+            {
+                var single = await UploadAsync(file, schoolId, userId, cancellationToken);
+                results.Add(single);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,
+                    "Unhandled error in batch loop for {OriginalName} (SchoolId={SchoolId})",
+                    file.FileName, schoolId);
+                _auditLog.Record(new AuditEvent
+                {
+                    Action = AuditAction.Upload,
+                    Outcome = AuditOutcome.Failed,
+                    ReasonCode = "INTERNAL_ERROR",
+                    Message = ex.Message,
+                    SchoolId = schoolId,
+                    UserId = userId,
+                    OriginalName = file.FileName
+                });
+                results.Add(new SingleFileUploadResponse
+                {
+                    OriginalName = file.FileName ?? string.Empty,
+                    Status = nameof(UploadStatus.Failed),
+                    ReasonCode = "INTERNAL_ERROR",
+                    Message = "حدث خطأ غير متوقع أثناء معالجة الملف",
+                    DocumentId = null,
+                    Category = null,
+                    SizeBytes = file.Length,
+                    MimeType = (file.ContentType ?? string.Empty).ToLowerInvariant(),
+                    BlobUri = null
+                });
+            }
+        }
+
+        return new BatchUploadResponse
+        {
+            TotalFiles = results.Count,
+            SuccessfulFiles = results.Count(r => r.Status == nameof(UploadStatus.Success)),
+            FailedFiles = results.Count(r => r.Status != nameof(UploadStatus.Success)),
+            Results = results
+        };
+    }
 }

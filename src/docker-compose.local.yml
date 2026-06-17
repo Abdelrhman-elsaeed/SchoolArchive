@@ -1,0 +1,105 @@
+# Local Development Stack (Phase 2.5+, Phase 7 dev-run cleanup)
+# Brings up: API + Azurite (Blob emulator). n8n is hosted externally
+# and is reached via the N8N_WEBHOOK_URL environment variable — no local
+# n8n container is started. See docs/agent/LOCAL_RUN.md for usage.
+
+name: arabic-school-archive-local
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: asa-api
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+
+      # --- Connection strings (overridden by .env) ---
+      ConnectionStrings__AzureSql: ${CONNECTIONSTRINGS__AZURESQL:-Server=sqlserver;Database=ArabicSchoolArchiveDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;}
+
+      # --- Upload limits ---
+      Upload__MaxFileSizeBytes: ${UPLOAD_MAX_FILE_SIZE_BYTES:-20971520}
+      Upload__MaxBatchSizeBytes: ${UPLOAD_MAX_BATCH_SIZE_BYTES:-26214400}
+
+      # --- n8n classification webhook (EXTERNAL) ---
+      # The user already runs n8n outside this stack. N8N_WEBHOOK_URL must be
+      # set in .env to a reachable URL (e.g. https://your-n8n.example.com/webhook/...).
+      # There is no fallback to a local "n8n" container.
+      N8N__WebhookUrl: ${N8N_WEBHOOK_URL:?N8N_WEBHOOK_URL is required in .env}
+      N8N__TimeoutSeconds: ${N8N_TIMEOUT_SECONDS:-15}
+      N8N__SharedSecret: ${N8N_SHARED_SECRET:-}
+
+      # --- Azure Blob (Azurite by default) ---
+      Blob__ConnectionString: ${BLOB_CONNECTION_STRING:-UseDevelopmentStorage=true;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;DefaultEndpointsProtocol=http;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;TableEndpoint=http://azurite:10002/devstoreaccount1;}
+      Blob__ContainerName: ${BLOB_CONTAINER_NAME:-school-archives}
+      Blob__UploadTimeoutSeconds: ${BLOB_UPLOAD_TIMEOUT_SECONDS:-30}
+
+      # --- Auth (DEV-ONLY: signing key + tokens only checked in non-Development envs) ---
+      Auth__Issuer: ${AUTH_ISSUER:-}
+      Auth__Audience: ${AUTH_AUDIENCE:-}
+      Auth__SigningKey: ${AUTH_SIGNING_KEY:-}
+      Auth__RequireHttpsMetadata: ${AUTH_REQUIRE_HTTPS_METADATA:-false}
+      Auth__ClockSkewSeconds: ${AUTH_CLOCK_SKEW_SECONDS:-30}
+
+      # --- Dev-only auth bypass toggle ---
+      # When "true" AND ASPNETCORE_ENVIRONMENT=Development, the API accepts
+      # X-Dev-School-Id and X-Dev-User-Id headers instead of a JWT.
+      # This is ignored outside Development. See docs/agent/LOCAL_RUN.md.
+      Auth__DevBypassEnabled: ${AUTH_DEV_BYPASS_ENABLED:-true}
+
+      # --- Local dev affordances ---
+      # When true AND the host env is Development, the dev-only content stream
+      # route is registered at GET /api/v1/archive/archives/{id}/content.
+      # The frontend uses this route for downloads in local dev so the browser
+      # never has to resolve the internal "azurite" DNS name.
+      LocalDev__DownloadStreamEnabled: ${LOCAL_DEV_DOWNLOAD_STREAM_ENABLED:-true}
+
+      # --- CORS for the Vite dev server (localhost:5173) ---
+      Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN:-http://localhost:5173}
+    depends_on:
+      azurite:
+        condition: service_started
+      sqlserver:
+        condition: service_started
+    networks:
+      - asa-net
+    restart: unless-stopped
+
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.34.0
+    container_name: asa-azurite
+    command: "azurite --silent --location /data --debug /data/debug.log --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0"
+    ports:
+      - "10000:10000"   # Blob
+      - "10001:10001"   # Queue
+      - "10002:10002"   # Table
+    volumes:
+      - azurite-data:/data
+    networks:
+      - asa-net
+    restart: unless-stopped
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: asa-sqlserver
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+    volumes:
+      - sql-data:/var/opt/mssql
+    networks:
+      - asa-net
+    restart: unless-stopped
+
+volumes:
+  azurite-data:
+  sql-data:
+
+networks:
+  asa-net:
+    driver: bridge

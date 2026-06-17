@@ -20,6 +20,14 @@ public sealed class SingleFileUploadResponse
     public string? BlobUri { get; set; }
 }
 
+public sealed class BatchUploadResponse
+{
+    public int TotalFiles { get; set; }
+    public int SuccessfulFiles { get; set; }
+    public int FailedFiles { get; set; }
+    public List<SingleFileUploadResponse> Results { get; set; } = new();
+}
+
 public sealed class ErrorResponse
 {
     public string Code { get; set; } = string.Empty;

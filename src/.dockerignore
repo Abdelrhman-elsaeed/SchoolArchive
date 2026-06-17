@@ -1,0 +1,36 @@
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+**/dist/
+**/dist-ssr/
+
+# Vite / Node frontend
+node_modules/
+.npm/
+.yarn/
+.vite/
+*.tsbuildinfo
+
+# IDE / OS
+.git/
+.vs/
+.idea/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# Local env / secrets (do NOT bake these into the image)
+.env
+.env.local
+.env.*.local
+src/.env
+src/api.err
+src/api.out
+
+# Frontend project (not built by the API Dockerfile)
+src/ArabicSchoolArchive.Web/
+
+# Tests (not built by the API Dockerfile)
+src/ArabicSchoolArchive.Tests/

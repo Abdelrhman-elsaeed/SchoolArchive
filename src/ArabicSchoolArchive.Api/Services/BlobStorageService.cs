@@ -88,6 +88,7 @@ public sealed class BlobStorageService : IBlobStorageService
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(TimeSpan.FromSeconds(_options.UploadTimeoutSeconds));
 
+            await container.CreateIfNotExistsAsync(cancellationToken: cts.Token);
             await blob.UploadAsync(content, new BlobUploadOptions { HttpHeaders = headers }, cts.Token);
             return new BlobUploadResult(true, null);
         }

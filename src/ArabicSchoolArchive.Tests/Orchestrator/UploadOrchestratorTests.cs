@@ -28,9 +28,11 @@ public class UploadOrchestratorTests
 
     private UploadOrchestrator BuildOrchestrator() => new(
         new FileValidator(),
+        new FileSignatureValidator(),
         _n8n.Object,
         _blob.Object,
         new ArchiveRepository(_db, NullLogger<ArchiveRepository>.Instance),
+        new AuditLog(NullLogger<AuditLog>.Instance),
         Options.Create(new UploadOptions()),
         NullLogger<UploadOrchestrator>.Instance,
         TimeProvider.System);
@@ -39,6 +41,15 @@ public class UploadOrchestratorTests
     {
         var bytes = new byte[size];
         new Random(42).NextBytes(bytes);
+        if (size >= 5 && (mime == "application/pdf" || name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)))
+        {
+            bytes[0] = 0x25; bytes[1] = 0x50; bytes[2] = 0x44; bytes[3] = 0x46; bytes[4] = 0x2D;
+        }
+        if (size >= 8 && (mime == "image/png" || name.EndsWith(".png", StringComparison.OrdinalIgnoreCase)))
+        {
+            bytes[0] = 0x89; bytes[1] = 0x50; bytes[2] = 0x4E; bytes[3] = 0x47;
+            bytes[4] = 0x0D; bytes[5] = 0x0A; bytes[6] = 0x1A; bytes[7] = 0x0A;
+        }
         var ms = new MemoryStream(bytes);
         return new FormFile(ms, 0, size, "file", name)
         {
@@ -53,7 +64,7 @@ public class UploadOrchestratorTests
         _n8n.Setup(x => x.ClassifyAsync(
                 It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new N8nResult(true, "تقرير إداري", null, null));
+            .ReturnsAsync(TestN8nResults.Success("تقرير إداري"));
 
         _blob.Setup(x => x.BuildObjectName(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<DateTime>()))
             .Returns("schools/test/archive/2026/06/abc_report.pdf");
@@ -100,7 +111,7 @@ public class UploadOrchestratorTests
         _n8n.Setup(x => x.ClassifyAsync(
                 It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new N8nResult(false, null, "timeout", "N8N_TIMEOUT"));
+            .ReturnsAsync(TestN8nResults.Failure("N8N_TIMEOUT", "timeout"));
 
         var file = MakeFile("report.pdf", 1024);
         var resp = await BuildOrchestrator().UploadAsync(file, Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
@@ -120,7 +131,7 @@ public class UploadOrchestratorTests
         _n8n.Setup(x => x.ClassifyAsync(
                 It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new N8nResult(true, "تقرير", null, null));
+            .ReturnsAsync(TestN8nResults.Success("تقرير"));
 
         _blob.Setup(x => x.BuildObjectName(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<DateTime>()))
             .Returns("schools/test/archive/2026/06/blobpath.pdf");
@@ -144,7 +155,7 @@ public class UploadOrchestratorTests
         _n8n.Setup(x => x.ClassifyAsync(
                 It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new N8nResult(true, "تقرير", null, null));
+            .ReturnsAsync(TestN8nResults.Success("تقرير"));
 
         _blob.Setup(x => x.BuildObjectName(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<DateTime>()))
             .Returns("schools/test/archive/2026/06/blobpath.pdf");
@@ -159,8 +170,9 @@ public class UploadOrchestratorTests
             .Options;
         await using var badDb = new ThrowingDbContext(badDbOpts);
         var orch = new UploadOrchestrator(
-            new FileValidator(), _n8n.Object, _blob.Object,
+            new FileValidator(), new FileSignatureValidator(), _n8n.Object, _blob.Object,
             new ArchiveRepository(badDb, NullLogger<ArchiveRepository>.Instance),
+            new AuditLog(NullLogger<AuditLog>.Instance),
             Options.Create(new UploadOptions()),
             NullLogger<UploadOrchestrator>.Instance,
             TimeProvider.System);
@@ -178,7 +190,7 @@ public class UploadOrchestratorTests
         _n8n.Setup(x => x.ClassifyAsync(
                 It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new N8nResult(true, "تقرير", null, null));
+            .ReturnsAsync(TestN8nResults.Success("تقرير"));
         _blob.Setup(x => x.BuildObjectName(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<DateTime>()))
             .Returns("schools/x/archive/2026/06/p.pdf");
         _blob.Setup(x => x.BuildSafeName(It.IsAny<string>())).Returns("p.pdf");
@@ -199,7 +211,7 @@ public class UploadOrchestratorTests
         _n8n.Setup(x => x.ClassifyAsync(
                 It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(),
                 It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new N8nResult(true, "تقرير", null, null));
+            .ReturnsAsync(TestN8nResults.Success("تقرير"));
         var schoolId = Guid.NewGuid();
         _blob.Setup(x => x.BuildObjectName(schoolId, It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<DateTime>()))
             .Returns($"schools/{schoolId}/archive/2026/06/abc_report.pdf");
@@ -214,6 +226,73 @@ public class UploadOrchestratorTests
 
         Assert.NotNull(resp.BlobUri);
         Assert.StartsWith($"schools/{schoolId}/", resp.BlobUri);
+    }
+
+    [Fact]
+    public async Task RichN8nMetadata_PersistedToRow()
+    {
+        _n8n.Setup(x => x.ClassifyAsync(
+                It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(TestN8nResults.SuccessRich(
+                category: "شهادات",
+                displayName: "شهادة تقدير للمعلم محمود احمد السعيد",
+                summary: "شهادة تقدير للمعلم محمود احمد السعيد بمناسبة اليوم العالمي للمعلم",
+                tags: new[] { "معلم", "تقدير", "شهادة" },
+                confidence: 0.9,
+                needsReview: false));
+
+        _blob.Setup(x => x.BuildObjectName(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<DateTime>()))
+            .Returns("schools/x/archive/2026/06/asdfwef.PNG");
+        _blob.Setup(x => x.BuildSafeName(It.IsAny<string>())).Returns("asdfwef.PNG");
+        _blob.Setup(x => x.UploadAsync(
+                It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<Stream>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BlobUploadResult(true, null));
+
+        var orch = BuildOrchestrator();
+        var file = MakeFile("asdfwef.PNG", 1024, "image/png");
+        var resp = await orch.UploadAsync(file, Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+
+        Assert.Equal("Success", resp.Status);
+        Assert.Equal("شهادات", resp.Category);
+        var row = _db.Archives.Single();
+        Assert.Equal("شهادة تقدير للمعلم محمود احمد السعيد", row.DisplayName);
+        Assert.Equal("شهادة تقدير للمعلم محمود احمد السعيد بمناسبة اليوم العالمي للمعلم", row.Summary);
+        Assert.Equal(new[] { "معلم", "تقدير", "شهادة" }, row.Tags);
+        Assert.Equal(0.9, row.Confidence);
+        Assert.False(row.NeedsReview);
+    }
+
+    [Fact]
+    public async Task NeedsReview_TrueFromN8n_IsPersisted()
+    {
+        _n8n.Setup(x => x.ClassifyAsync(
+                It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(TestN8nResults.SuccessRich(
+                category: "غير مصنف",
+                displayName: "مستند غير معروف",
+                summary: null,
+                tags: Array.Empty<string>(),
+                confidence: 0.32,
+                needsReview: true));
+
+        _blob.Setup(x => x.BuildObjectName(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<DateTime>()))
+            .Returns("schools/x/archive/2026/06/mystery.pdf");
+        _blob.Setup(x => x.BuildSafeName(It.IsAny<string>())).Returns("mystery.pdf");
+        _blob.Setup(x => x.UploadAsync(
+                It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<Stream>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new BlobUploadResult(true, null));
+
+        var file = MakeFile("mystery.pdf", 1024);
+        var resp = await BuildOrchestrator().UploadAsync(file, Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None);
+
+        Assert.Equal("Success", resp.Status);
+        var row = _db.Archives.Single();
+        Assert.True(row.NeedsReview);
+        Assert.Equal(0.32, row.Confidence);
     }
 
     private sealed class ThrowingDbContext : ArchiveDbContext

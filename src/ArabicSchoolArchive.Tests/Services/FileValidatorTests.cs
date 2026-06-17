@@ -104,4 +104,27 @@ public class FileValidatorTests
         var result = _validator.Validate(file, DefaultOptions());
         Assert.True(result.IsValid);
     }
+
+    [Fact]
+    public void Phase5_ZeroByteAndOversized_StillRejectedAsBefore()
+    {
+        var opts = new UploadOptions { MaxFileSizeBytes = 1024L };
+
+        var zero = MakeFormFile("empty.pdf", 0, "application/pdf");
+        Assert.False(_validator.Validate(zero, opts).IsValid);
+
+        var huge = MakeFormFile("big.pdf", 10_000, "application/pdf");
+        var hugeResult = _validator.Validate(huge, opts);
+        Assert.False(hugeResult.IsValid);
+        Assert.Equal("SIZE_EXCEEDED", hugeResult.ReasonCode);
+    }
+
+    [Fact]
+    public void Phase5_MimeMismatch_StillRejectedAsBefore()
+    {
+        var file = MakeFormFile("fake.pdf", 1024, "application/x-msdownload");
+        var result = _validator.Validate(file, DefaultOptions());
+        Assert.False(result.IsValid);
+        Assert.Equal("MIME_MISMATCH", result.ReasonCode);
+    }
 }

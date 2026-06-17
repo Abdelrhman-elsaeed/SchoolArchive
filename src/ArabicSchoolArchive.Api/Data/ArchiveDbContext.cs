@@ -29,6 +29,22 @@ public class ArchiveDbContext : DbContext
             entity.Property(a => a.ProcessingMonth)
                 .IsRequired();
 
+            entity.Property(a => a.NeedsReview)
+                .IsRequired()
+                .HasDefaultValue(false);
+
+            entity.Property(a => a.DisplayName)
+                .HasMaxLength(512);
+
+            entity.Property(a => a.Summary)
+                .HasMaxLength(2048);
+
+            entity.Property(a => a.TagsJson)
+                .HasColumnType("nvarchar(max)");
+
+            entity.Property(a => a.Confidence)
+                .HasColumnType("float");
+
             entity.HasIndex(a => new { a.SchoolId, a.UploadedAtUtc })
                 .HasDatabaseName("IX_Archives_School_UploadedAt")
                 .IsDescending(false, true);
@@ -39,6 +55,14 @@ public class ArchiveDbContext : DbContext
 
             entity.HasIndex(a => new { a.SchoolId, a.OriginalName })
                 .HasDatabaseName("IX_Archives_School_OriginalName");
+
+            entity.HasIndex(a => new { a.SchoolId, a.DisplayName })
+                .HasDatabaseName("IX_Archives_School_DisplayName");
+
+            entity.HasIndex(a => new { a.SchoolId, a.Summary })
+                .HasDatabaseName("IX_Archives_School_Summary");
+
+            entity.Ignore(a => a.Tags);
         });
     }
 }

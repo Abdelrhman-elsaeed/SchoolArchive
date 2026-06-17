@@ -1,0 +1,84 @@
+{
+  "name": "Arabic School Archive - Local",
+  "version": "1",
+  "items": [
+    {
+      "name": "Health (no auth)",
+      "type": "http",
+      "method": "GET",
+      "url": "{{baseUrl}}/health",
+      "seq": 1
+    },
+    {
+      "name": "Upload (no auth) - expect 401",
+      "type": "http",
+      "method": "POST",
+      "url": "{{baseUrl}}/api/v1/archive/upload",
+      "headers": [],
+      "body": {
+        "type": "multipart/form-data",
+        "file": "@file(sample.pdf)"
+      },
+      "seq": 2
+    },
+    {
+      "name": "Upload (DevBypass) - success path",
+      "type": "http",
+      "method": "POST",
+      "url": "{{baseUrl}}/api/v1/archive/upload",
+      "headers": [
+        { "name": "X-Dev-School-Id", "value": "{{devSchoolId}}", "enabled": true },
+        { "name": "X-Dev-User-Id", "value": "{{devUserId}}", "enabled": true }
+      ],
+      "body": {
+        "type": "multipart/form-data",
+        "file": "@file(sample.pdf)"
+      },
+      "seq": 3
+    },
+    {
+      "name": "Upload (DevBypass) - .exe rejected",
+      "type": "http",
+      "method": "POST",
+      "url": "{{baseUrl}}/api/v1/archive/upload",
+      "headers": [
+        { "name": "X-Dev-School-Id", "value": "{{devSchoolId}}", "enabled": true },
+        { "name": "X-Dev-User-Id", "value": "{{devUserId}}", "enabled": true }
+      ],
+      "body": {
+        "type": "multipart/form-data",
+        "file": "@file(looks-like-virus.exe)"
+      },
+      "seq": 4
+    },
+    {
+      "name": "Upload (DevBypass) - 21MB PDF rejected",
+      "type": "http",
+      "method": "POST",
+      "url": "{{baseUrl}}/api/v1/archive/upload",
+      "headers": [
+        { "name": "X-Dev-School-Id", "value": "{{devSchoolId}}", "enabled": true },
+        { "name": "X-Dev-User-Id", "value": "{{devUserId}}", "enabled": true }
+      ],
+      "body": {
+        "type": "multipart/form-data",
+        "file": "@file(big.pdf)"
+      },
+      "seq": 5
+    },
+    {
+      "name": "Upload (DevBypass) - missing tenant claim",
+      "type": "http",
+      "method": "POST",
+      "url": "{{baseUrl}}/api/v1/archive/upload",
+      "headers": [
+        { "name": "X-Dev-User-Id", "value": "{{devUserId}}", "enabled": true }
+      ],
+      "body": {
+        "type": "multipart/form-data",
+        "file": "@file(sample.pdf)"
+      },
+      "seq": 6
+    }
+  ]
+}

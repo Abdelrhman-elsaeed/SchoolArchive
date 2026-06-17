@@ -223,23 +223,58 @@ The shared secret is sent as a custom header (see § 3.2). It is not the same as
 
 HTTP `200 OK`. `Content-Type: application/json; charset=utf-8`.
 
+The n8n webhook returns a **rich AI/OCR-parsed payload**. The full canonical example:
+
 ```json
 {
-  "category": "تقرير إداري",
-  "confidence": 0.92,
-  "tags": ["تقرير", "إداري"],
-  "language": "ar"
+    "success": true,
+    "original_name": "asdfwef.PNG",
+    "mime_type": "image/png",
+    "pages": 1,
+    "status": "ocr_parsed",
+    "primary_category": "شهادات",
+    "secondary_categories": [],
+    "detected_custom_topics": [],
+    "tags": ["معلم", "تقدير", "شهادة"],
+    "related_topics": ["معلم", "مدرسة", "التقدير"],
+    "display_name": "شهادة تقدير للمعلم محمود احمد السعيد",
+    "summary": "شهادة تقدير للمعلم محمود احمد السعيد بمناسبة اليوم العالمي للمعلم",
+    "confidence": 0.9,
+    "needs_review": false,
+    "needs_taxonomy_update": false
 }
 ```
 
-| Field | Type | Required by backend | Description |
-|:---|:---|:---:|:---|
-| `category` | string | Yes (if absent → `N8N_INVALID_RESPONSE`) | The classification label. Stored in `Archives.category`. Max length 127 chars. |
-| `confidence` | number | No | Currently ignored. |
-| `tags` | array of string | No | Currently ignored. Reserved for Phase 4 search. |
-| `language` | string | No | Currently ignored. |
+#### 3.3.1 Field-by-Field Contract (n8n → Backend)
 
-The backend treats the response as opaque beyond `category`. Extra fields are ignored. Missing `category` ⇒ `N8N_INVALID_RESPONSE`.
+| Field | JSON type | Required by backend | Stored in | Description |
+|:---|:---|:---:|:---|:---|
+| `success` | boolean | No (informational) | — | Indicates n8n's self-reported success. The backend determines success via the presence of `primary_category`/`category`. |
+| `original_name` | string | No | — | Echoes the file name. Currently informational only. |
+| `mime_type` | string | No | — | Echoes the MIME type. Currently informational only. |
+| `pages` | integer | No | — | Page count for multi-page documents. Informational. |
+| `status` | string enum | No | — | e.g., `ocr_parsed`, `classified`. Informational. |
+| `primary_category` | string | **Yes** (preferred) | `Archives.category` | The classification label. **Preferred** over the legacy `category` field. Max length 127 chars (backend truncates). |
+| `category` | string | Yes (fallback) | `Archives.category` | Legacy field. Used only if `primary_category` is absent. |
+| `secondary_categories` | array of string | No | — | Additional candidate categories. Informational. |
+| `detected_custom_topics` | array of string | No | — | Tenant-specific topics. Informational. |
+| `tags` | array of string | No | `Archives.tags` (as JSON/CSV) | AI/OCR-derived keyword tags. Stored as a primitive collection. Each element ≤ 64 chars; list capped at 32. |
+| `related_topics` | array of string | No | — | Suggestion graph. Informational. |
+| `display_name` | string | No | `Archives.display_name` | AI-generated human-friendly title. Max 512 chars. |
+| `summary` | string | No | `Archives.summary` | AI-generated one-line summary. Max 2048 chars. |
+| `confidence` | number (0..1) | No | `Archives.confidence` | AI classification confidence score. Rounded to 4 decimal places on storage. |
+| `needs_review` | boolean | No | `Archives.needs_review` | Flag for low-confidence items. Default `false`. |
+| `needs_taxonomy_update` | boolean | No | — | Informational only. |
+
+#### 3.3.2 Resolution Rules
+
+1. **Category resolution**: `primary_category` is authoritative. If absent, fall back to `category`. If both absent → `N8N_INVALID_RESPONSE`.
+2. **Length limits**: `category`/`primary_category` is truncated to 127 chars. `display_name` to 512 chars. `summary` to 2048 chars. Each `tag` element truncated to 64 chars; list capped at 32 entries.
+3. **Missing optional fields**: If `display_name`, `summary`, `tags`, `confidence`, or `needs_review` are absent in the n8n response, the corresponding `Archives` column is stored as `NULL` (or `false` for `needs_review`). The row remains valid and the UI gracefully omits the field.
+4. **Whitespace**: leading/trailing whitespace on string fields is trimmed.
+5. **Confidence range**: if outside `[0, 1]`, clamped to the nearest bound. If non-numeric, stored as `NULL`.
+
+The backend treats the response as opaque beyond these named fields. Extra fields are ignored. Missing `primary_category` AND `category` ⇒ `N8N_INVALID_RESPONSE`.
 
 ### 3.4 Response (Failure Modes as Seen by Backend)
 

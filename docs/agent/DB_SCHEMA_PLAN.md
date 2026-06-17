@@ -40,6 +40,11 @@ The `Archives` table is the **only** table written by the upload orchestration. 
 | 11 | `processing_year` | `INT` | No | (none) | `YEAR(uploaded_at_utc)`. Denormalized for the Blob-path year segment; avoids runtime `FORMAT` cost in queries. |
 | 12 | `processing_month` | `TINYINT` | No | (none) | `MONTH(uploaded_at_utc)`. Denormalized for the Blob-path month segment. Range 1–12. |
 | 13 | `content_hash_sha256` | `CHAR(64)` | Yes | `NULL` | SHA-256 of the original file bytes. Computed during upload. Optional in v1 (used for future dedup and integrity checks). |
+| 14 | `display_name` | `NVARCHAR(512)` | Yes | `NULL` | AI-generated human-friendly title (e.g., "شهادة تقدير للمعلم محمود احمد السعيد"). Populated from n8n response `display_name`. Falls back to `original_name` for display. |
+| 15 | `summary` | `NVARCHAR(2048)` | Yes | `NULL` | AI-generated one-line summary of the document. Populated from n8n response `summary`. |
+| 16 | `tags_json` | `NVARCHAR(MAX)` | Yes | `NULL` | AI/OCR-derived keyword tags as a JSON-serialized string array. EF Core primitive collection mapping. Populated from n8n response `tags`. Capped at 32 entries × 64 chars each. |
+| 17 | `confidence` | `FLOAT` | Yes | `NULL` | AI classification confidence in `[0, 1]`. Populated from n8n response `confidence`. |
+| 18 | `needs_review` | `BIT` | No | `0` | Set to `true` if n8n flagged the document for human review (`needs_review` field). Drives a warning badge in the UI. |
 
 ### 2.2 Constraints
 
@@ -64,8 +69,20 @@ The `Archives` table is the **only** table written by the upload orchestration. 
 | 3 | `IX_Archives_School_Category` | `school_id, category, uploaded_at_utc DESC` | Nonclustered | Category browsing (Phase 4). |
 | 4 | `IX_Archives_School_OriginalName` | `school_id, original_name` | Nonclustered | Name search (Phase 4). |
 | 5 | `IX_Archives_ContentHash` | `content_hash_sha256` WHERE `content_hash_sha256 IS NOT NULL` | Nonclustered filtered | Optional future dedup. |
+| 6 | `IX_Archives_School_DisplayName` | `school_id, display_name` | Nonclustered | AI-title search (Phase 7.9+). |
+| 7 | `IX_Archives_School_Summary` | `school_id, summary` | Nonclustered | Summary search (Phase 7.9+). |
 
 All nonclustered indexes are composite-prefixed by `school_id` to ensure index seeks never scan across tenants.
+
+#### 2.3.1 Smart Search Behavior (Phase 7.9+)
+
+The browse search filter (`OriginalNameContains`) performs a `LIKE '%needle%'` against **three** columns simultaneously, OR-combined:
+
+1. `original_name` (the raw upload filename)
+2. `display_name` (the AI-generated title)
+3. `summary` (the AI-generated one-liner)
+
+This makes the search robust: a user can find a شهادة تقدير by typing "معلم" even when the file was uploaded as `IMG_2034.PNG`.
 
 ### 2.4 EF Core Global Query Filter
 
@@ -112,13 +129,15 @@ INSERT INTO Archives (
   size_bytes, mime_type, category,
   uploaded_by_user_id, uploaded_at_utc,
   processing_year, processing_month,
-  content_hash_sha256
+  content_hash_sha256,
+  display_name, summary, tags_json, confidence, needs_review
 ) VALUES (
   @documentId, @schoolId, @originalName, @safeName, @blobObjectName,
   @sizeBytes, @mimeType, @category,
   @userId, SYSUTCDATETIME(),
   YEAR(SYSUTCDATETIME()), MONTH(SYSUTCDATETIME()),
-  @contentHash
+  @contentHash,
+  @displayName, @summary, @tagsJson, @confidence, @needsReview
 );
 ```
 
@@ -173,6 +192,11 @@ uploaded_at_utc    : 2026-06-16T10:15:30.1234567Z
 processing_year    : 2026
 processing_month   : 6
 content_hash_sha256: "9b2c..."
+display_name       : "تقرير غياب الفصل 3-أ - 16 يونيو 2026"
+summary            : "تقرير يوضح نسب الغياب اليومية لطلاب الفصل 3-أ خلال الأسبوع الأول من يونيو 2026"
+tags_json          : "[\"تقرير\",\"غياب\",\"طلاب\",\"فصل 3-أ\"]"
+confidence         : 0.92
+needs_review       : false
 ```
 
 ### Multi-file batch (three rows in the same batch, all success)

@@ -1,8 +1,10 @@
 using System.Security.Claims;
+using ArabicSchoolArchive.Api.Configuration;
 using ArabicSchoolArchive.Api.Dtos;
 using ArabicSchoolArchive.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace ArabicSchoolArchive.Api.Controllers;
 
@@ -11,25 +13,30 @@ namespace ArabicSchoolArchive.Api.Controllers;
 [Route("api/v1/archive")]
 public sealed class ArchiveUploadController : ControllerBase
 {
+    private const long DefaultMaxRequestBodyBytes = 25L * 1024 * 1024;
+
     private readonly IUploadOrchestrator _orchestrator;
+    private readonly UploadOptions _uploadOptions;
     private readonly ILogger<ArchiveUploadController> _logger;
 
-    public ArchiveUploadController(IUploadOrchestrator orchestrator, ILogger<ArchiveUploadController> logger)
+    public ArchiveUploadController(
+        IUploadOrchestrator orchestrator,
+        IOptions<UploadOptions> uploadOptions,
+        ILogger<ArchiveUploadController> logger)
     {
         _orchestrator = orchestrator;
+        _uploadOptions = uploadOptions.Value;
         _logger = logger;
     }
 
     [HttpPost("upload")]
-    [RequestSizeLimit(25L * 1024 * 1024)]
-    [RequestFormLimits(MultipartBodyLengthLimit = 25L * 1024 * 1024, ValueLengthLimit = int.MaxValue)]
-    public async Task<IActionResult> Upload([FromForm] IFormFile? file, CancellationToken cancellationToken)
+    [RequestSizeLimit(DefaultMaxRequestBodyBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = DefaultMaxRequestBodyBytes, ValueLengthLimit = int.MaxValue)]
+    public async Task<IActionResult> Upload(
+        [FromForm] IFormFile? file,
+        [FromForm] IFormFileCollection? files,
+        CancellationToken cancellationToken)
     {
-        if (file is null || file.Length == 0)
-        {
-            return BadRequest(new ErrorResponse { Code = "EMPTY_BATCH" });
-        }
-
         if (!TryGetSchoolId(out var schoolId))
         {
             return StatusCode(StatusCodes.Status403Forbidden,
@@ -41,8 +48,35 @@ public sealed class ArchiveUploadController : ControllerBase
             userId = Guid.Empty;
         }
 
-        var response = await _orchestrator.UploadAsync(file, schoolId, userId, cancellationToken);
-        return Ok(response);
+        var hasFiles = files is not null && files.Count > 0;
+        var hasSingle = file is not null && file.Length > 0;
+
+        if (hasFiles)
+        {
+            var totalBytes = files!.Sum(f => f.Length);
+            if (totalBytes > _uploadOptions.MaxBatchSizeBytes)
+            {
+                _logger.LogWarning(
+                    "Batch size {TotalBytes} exceeds MaxBatchSizeBytes {Max} (SchoolId={SchoolId})",
+                    totalBytes, _uploadOptions.MaxBatchSizeBytes, schoolId);
+                return BadRequest(new ErrorResponse
+                {
+                    Code = "BODY_TOO_LARGE"
+                });
+            }
+
+            var batch = await _orchestrator.UploadBatchAsync(
+                files.ToList(), schoolId, userId, cancellationToken);
+            return Ok(batch);
+        }
+
+        if (hasSingle)
+        {
+            var single = await _orchestrator.UploadAsync(file!, schoolId, userId, cancellationToken);
+            return Ok(single);
+        }
+
+        return BadRequest(new ErrorResponse { Code = "EMPTY_BATCH" });
     }
 
     private bool TryGetSchoolId(out Guid schoolId)

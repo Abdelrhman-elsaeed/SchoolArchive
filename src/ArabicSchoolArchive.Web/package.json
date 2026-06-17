@@ -1,0 +1,35 @@
+{
+  "name": "arabic-school-archive-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Gulf-school Arabic admin UI for the Arabic School Archive API (Phase 7.5). RTL-first, React + TypeScript, Vite-powered, styled with Tailwind CSS, data layer on TanStack Query.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit",
+    "test": "tsc -p tsconfig.test.json --noEmit && node --test --experimental-strip-types tests/*.test.ts"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.0",
+    "autoprefixer": "^10.5.0",
+    "graphology": "^0.26.0",
+    "graphology-layout-forceatlas2": "^0.10.1",
+    "graphology-types": "^0.24.8",
+    "lucide-react": "^1.20.0",
+    "postcss": "^8.5.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sigma": "^3.0.0",
+    "tailwindcss": "^3.4.19"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}

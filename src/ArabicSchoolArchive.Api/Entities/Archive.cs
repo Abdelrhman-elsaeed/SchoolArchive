@@ -55,4 +55,49 @@ public sealed class Archive
     [Column("content_hash_sha256")]
     [MaxLength(64)]
     public string? ContentHashSha256 { get; set; }
+
+    [Column("display_name")]
+    [MaxLength(512)]
+    public string? DisplayName { get; set; }
+
+    [Column("summary")]
+    [MaxLength(2048)]
+    public string? Summary { get; set; }
+
+    [Column("tags_json")]
+    public string? TagsJson { get; set; }
+
+    [NotMapped]
+    public List<string> Tags
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(TagsJson)) return new List<string>();
+            try
+            {
+                return System.Text.Json.JsonSerializer.Deserialize<List<string>>(TagsJson) ?? new List<string>();
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                return new List<string>();
+            }
+        }
+        set
+        {
+            if (value is null || value.Count == 0)
+            {
+                TagsJson = null;
+            }
+            else
+            {
+                TagsJson = System.Text.Json.JsonSerializer.Serialize(value);
+            }
+        }
+    }
+
+    [Column("confidence")]
+    public double? Confidence { get; set; }
+
+    [Column("needs_review")]
+    public bool NeedsReview { get; set; }
 }

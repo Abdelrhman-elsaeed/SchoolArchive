@@ -67,4 +67,37 @@ public class BlobStorageServiceSafeNameTests
         var name = _service.BuildObjectName(schoolId, docId, "report.pdf", ts);
         Assert.StartsWith($"schools/{schoolId}/archive/2026/06/{docId}_", name);
     }
+
+    [Fact]
+    public void Phase5_SasRefusesNonTenantPrefix()
+    {
+        var options = Microsoft.Extensions.Options.Options.Create(
+            new ArabicSchoolArchive.Api.Configuration.BlobOptions
+            {
+                ConnectionString = "AccountName=devstoreaccount1;AccountKey=***"
+            });
+        var gen = new ArabicSchoolArchive.Api.Services.BlobSasGenerator(
+            new Azure.Storage.Blobs.BlobServiceClient("UseDevelopmentStorage=true;"),
+            options,
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<ArabicSchoolArchive.Api.Services.BlobSasGenerator>.Instance);
+
+        var school = Guid.NewGuid();
+        var docId = Guid.NewGuid();
+        var otherSchool = Guid.NewGuid();
+
+        Assert.Throws<ArgumentException>(() => gen.GenerateRead(
+            school, docId,
+            $"schools/{otherSchool}/archive/2026/06/{docId}_steal.pdf",
+            new DateTime(2026, 6, 16, 0, 0, 0, DateTimeKind.Utc)));
+
+        Assert.Throws<ArgumentException>(() => gen.GenerateRead(
+            school, docId,
+            "../escaped.pdf",
+            new DateTime(2026, 6, 16, 0, 0, 0, DateTimeKind.Utc)));
+
+        Assert.Throws<ArgumentException>(() => gen.GenerateRead(
+            school, docId,
+            $"schools/{school}/archive/../escape.pdf",
+            new DateTime(2026, 6, 16, 0, 0, 0, DateTimeKind.Utc)));
+    }
 }

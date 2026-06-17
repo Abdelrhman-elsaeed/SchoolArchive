@@ -79,3 +79,26 @@ secrets.json
 node_modules/
 .DS_Store
 Thumbs.db
+
+# Local environment files (Phase 2.5)
+.env
+.env.*
+!.env.example
+src/.env
+src/.env.*
+
+# Azurite emulator data (Phase 2.5)
+azurite-data/
+**/azurite-data/
+**/Azurite*.db
+
+# Docker compose generated artifacts (Phase 2.5)
+src/.volumes/
+
+# Stray runtime artifacts
+NUL
+*.err
+*.out
+D:Alfalah
+/D:Alfalah
+

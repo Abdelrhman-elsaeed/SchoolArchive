@@ -45,10 +45,16 @@ schools/{schoolId}/archive/{yyyy}/{MM}/{documentId}_{safeFileName}
 
 The `safeFileName` is derived from the original filename **only for the storage key**. It is never written to the DB `original_name` column.
 
+Allowed character set (the allowlist):
+- ASCII letters: `A-Z`, `a-z`
+- ASCII digits: `0-9`
+- The characters `.`, `_`, `-`
+- Arabic Unicode block: `U+0600`–`U+06FF` (the Arabic and Arabic Supplement blocks)
+
 Rules:
 1. Trim leading/trailing whitespace.
 2. Replace every space (`U+0020`) with `_`.
-3. For every character not in the allowlist `[A-Za-z0-9._-]`, replace it with `_`.
+3. For every character not in the allowlist above, replace it with `_`.
 4. Collapse consecutive `_` into a single `_`.
 5. Strip leading `_` and `.` characters.
 6. Truncate to **100 characters** maximum.
@@ -70,9 +76,9 @@ The Blob object name is:
 schools/11111111-1111-1111-1111-111111111111/archive/2026/06/4a3b1d2e-07d7-4729-996b-66b002e885d9_تقرير_الغياب_2026.pdf
 ```
 
-Sanitization steps (in this example, the spaces are replaced):
+Sanitization steps (in this example, only the spaces are replaced):
 - Original: `تقرير الغياب 2026.pdf`
-- Step 2: `تقرير_الغياب_2026.pdf` (no other changes — all characters are in allowlist)
+- Step 2: `تقرير_الغياب_2026.pdf` (Arabic letters are in the allowlist, so they pass through)
 - All other steps: no-op.
 
 ### 2.4 Anti-Patterns (Explicitly Rejected)

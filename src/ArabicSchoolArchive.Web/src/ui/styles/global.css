@@ -1,0 +1,262 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Design tokens — runtime mirror of tailwind.config.js
+ *  - Use these for plain CSS (focus rings, skeletons, custom patterns)
+ *    and for the dark/strong "palm" sidebar / top bar accents.
+ * ──────────────────────────────────────────────────────────────────── */
+:root {
+  /* Color */
+  --asa-canvas:        #F4ECDB;
+  --asa-cream:         #F6F1E7;
+  --asa-cream-soft:    #EFE6D2;
+  --asa-paper:         #FFFBF1;
+  --asa-surface:       #FFFDF8;
+  --asa-surface-muted: #F1E8D2;
+  --asa-surface-sunken:#E7DBBF;
+  --asa-stone:         #DCC8A6;
+
+  --asa-border:        #D9C9A5;
+  --asa-border-soft:   #E4D6B5;
+  --asa-border-strong: #BFA776;
+  --asa-border-deep:   #A98A52;
+
+  --asa-ink:        #0F2236;
+  --asa-ink-strong: #08172A;
+  --asa-ink-muted:  #3F5468;
+  --asa-ink-soft:   #7A7363;
+
+  --asa-palm:        #0E5A46;
+  --asa-palm-600:    #0A4636;
+  --asa-palm-700:    #073527;
+  --asa-tan:         #C8A46A;
+  --asa-tan-600:     #9A7138;
+  --asa-oud:         #5C4532;
+  --asa-maroon:      #7A2E2E;
+  --asa-warm:        #8A847B;
+
+  /* Motion */
+  --asa-ease:      cubic-bezier(0.22, 1, 0.36, 1);
+  --asa-ease-fast: cubic-bezier(0.4, 0, 0.2, 1);
+  --asa-dur-fast:  180ms;
+  --asa-dur-base:  220ms;
+  --asa-dur-slow:  320ms;
+
+  /* Radii */
+  --asa-r-sm: 5px;
+  --asa-r-md: 8px;
+  --asa-r-lg: 12px;
+  --asa-r-xl: 14px;
+}
+
+@layer base {
+  html, body, #root { height: 100%; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+  body {
+    background-color: var(--asa-canvas);
+    color: var(--asa-ink);
+    font-family:
+      "IBM Plex Sans Arabic", "Noto Kufi Arabic", "Tajawal", "Cairo",
+      "Segoe UI", system-ui, -apple-system, sans-serif;
+    background-image:
+      radial-gradient(1400px 700px at 100% -10%, rgba(200, 164, 106, 0.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(14, 90, 70, 0.06), transparent 60%);
+    background-attachment: fixed;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "ss01" on, "ss02" on, "kern" on;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family:
+      "Saudi", "Al-Awwal", "IBM Plex Sans Arabic", "Tajawal", "Cairo",
+      "Segoe UI", system-ui, -apple-system, sans-serif;
+    color: var(--asa-ink-strong);
+    letter-spacing: -0.01em;
+  }
+  .font-display {
+    font-family:
+      "Saudi", "Al-Awwal", "IBM Plex Sans Arabic", "Tajawal", "Cairo",
+      "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  .font-kufi {
+    font-family:
+      "Noto Kufi Arabic", "IBM Plex Sans Arabic", "Tajawal", system-ui, sans-serif;
+  }
+
+  [dir="ltr"] input,
+  [dir="ltr"] textarea {
+    direction: ltr;
+    text-align: left;
+  }
+
+  /* Focus: visible, palm-tinted, accessible */
+  *:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(14, 90, 70, 0.30);
+    border-radius: 6px;
+  }
+
+  ::selection { background: rgba(14, 90, 70, 0.20); color: var(--asa-ink-strong); }
+}
+
+@layer components {
+  /* ─── Surface primitives (real step, visible depth) ─── */
+  .asa-card {
+    background-color: var(--asa-paper);
+    border: 1px solid var(--asa-border);
+    border-radius: var(--asa-r-lg);
+    box-shadow:
+      0 1px 0 0 rgba(15, 34, 54, 0.04),
+      0 1px 2px 0 rgba(15, 34, 54, 0.05),
+      0 4px 12px -4px rgba(15, 34, 54, 0.04);
+  }
+  .asa-card-soft {
+    background-color: var(--asa-paper);
+    border: 1px solid var(--asa-border-soft);
+    border-radius: var(--asa-r-lg);
+  }
+  .asa-sunken {
+    background-color: var(--asa-surface-sunken);
+    border: 1px solid var(--asa-border-soft);
+    border-radius: var(--asa-r-md);
+  }
+  .asa-inset {
+    background-color: var(--asa-surface-muted);
+    border: 1px solid var(--asa-border-soft);
+    border-radius: var(--asa-r-md);
+  }
+
+  /* ─── Divider rails ─── */
+  .asa-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(200, 164, 106, 0.7) 50%, transparent 100%);
+  }
+  .asa-divider-ink {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(15, 34, 54, 0.16) 50%, transparent 100%);
+  }
+  .asa-divider-flat { height: 1px; background: var(--asa-border-soft); }
+
+  /* ─── Section / eyebrow labels ─── */
+  .asa-kicker {
+    font-family: "Noto Kufi Arabic", "IBM Plex Sans Arabic", "Tajawal", sans-serif;
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    letter-spacing: 0.22em;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--asa-tan-600);
+  }
+  .asa-section-label {
+    font-family: "Noto Kufi Arabic", "IBM Plex Sans Arabic", "Tajawal", sans-serif;
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    letter-spacing: 0.20em;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--asa-ink-muted);
+  }
+  .asa-eyebrow {
+    font-family: "Noto Kufi Arabic", "IBM Plex Sans Arabic", "Tajawal", sans-serif;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    letter-spacing: 0.16em;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--asa-ink-muted);
+  }
+
+  /* ─── Accent side rule (vertical) ─── */
+  .asa-rule-r {
+    position: relative;
+  }
+  .asa-rule-r::before {
+    content: "";
+    position: absolute;
+    inset-inline-end: 0;
+    top: 0.6rem;
+    bottom: 0.6rem;
+    width: 3px;
+    background: linear-gradient(180deg, var(--asa-palm) 0%, var(--asa-tan) 100%);
+    border-radius: 9999px;
+  }
+  .asa-rule-l {
+    position: relative;
+  }
+  .asa-rule-l::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0.6rem;
+    bottom: 0.6rem;
+    width: 3px;
+    background: linear-gradient(180deg, var(--asa-palm) 0%, var(--asa-tan) 100%);
+    border-radius: 9999px;
+  }
+
+  /* ─── Skeleton ─── */
+  .asa-skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(15, 34, 54, 0.04) 0%,
+      rgba(15, 34, 54, 0.10) 50%,
+      rgba(15, 34, 54, 0.04) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s linear infinite;
+    border-radius: 6px;
+  }
+
+  /* ─── Quiet underline link (used for "remove" / "more" text links) ─── */
+  .asa-underline {
+    background-image: linear-gradient(90deg, var(--asa-tan), var(--asa-tan));
+    background-size: 0% 1.5px;
+    background-repeat: no-repeat;
+    background-position: 100% 100%;
+    transition: background-size 220ms var(--asa-ease);
+    padding-bottom: 2px;
+  }
+  .asa-underline:hover,
+  .asa-underline[data-active="true"] {
+    background-size: 100% 1.5px;
+  }
+}
+
+@layer utilities {
+  .ltr-mono {
+    font-family: "IBM Plex Mono", "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    direction: ltr;
+    text-align: start;
+    word-break: break-all;
+    font-feature-settings: "tnum" on, "zero" on;
+  }
+  .tnum { font-feature-settings: "tnum" on, "lnum" on; }
+  .tracked-wide { letter-spacing: 0.16em; }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--asa-border-strong) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--asa-border-strong);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background-color: var(--asa-warm); }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-none { scrollbar-width: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+
+  /* "Glow" used only as a real, brand-tinted accent — not as decoration */
+  .ring-palm-strong { box-shadow: 0 0 0 3px rgba(14, 90, 70, 0.22); }
+  .ring-tan-strong  { box-shadow: 0 0 0 3px rgba(200, 164, 106, 0.35); }
+}
