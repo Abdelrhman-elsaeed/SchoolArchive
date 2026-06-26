@@ -1,4 +1,4 @@
-using ArabicSchoolArchive.Api.Services;
+using ArabicSchoolArchive.Api.Clients.Azure;
 using Xunit;
 
 namespace ArabicSchoolArchive.Tests.Services;
@@ -76,10 +76,10 @@ public class BlobStorageServiceSafeNameTests
             {
                 ConnectionString = "AccountName=devstoreaccount1;AccountKey=***"
             });
-        var gen = new ArabicSchoolArchive.Api.Services.BlobSasGenerator(
+        var gen = new ArabicSchoolArchive.Api.Clients.Azure.BlobSasGenerator(
             new Azure.Storage.Blobs.BlobServiceClient("UseDevelopmentStorage=true;"),
             options,
-            Microsoft.Extensions.Logging.Abstractions.NullLogger<ArabicSchoolArchive.Api.Services.BlobSasGenerator>.Instance);
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<ArabicSchoolArchive.Api.Clients.Azure.BlobSasGenerator>.Instance);
 
         var school = Guid.NewGuid();
         var docId = Guid.NewGuid();

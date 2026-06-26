@@ -4,7 +4,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
 using Microsoft.Extensions.Options;
 
-namespace ArabicSchoolArchive.Api.Services;
+namespace ArabicSchoolArchive.Api.Clients.Azure;
 
 public sealed record BlobSasDescriptor(
     Guid DocumentId,

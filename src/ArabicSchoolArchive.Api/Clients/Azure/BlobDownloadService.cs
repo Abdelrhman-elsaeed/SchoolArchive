@@ -2,7 +2,7 @@ using ArabicSchoolArchive.Api.Configuration;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Options;
 
-namespace ArabicSchoolArchive.Api.Services;
+namespace ArabicSchoolArchive.Api.Clients.Azure;
 
 public sealed record BlobDownloadResult(bool Success, Stream? Content, string? ContentType, string? FailureReason);
 
@@ -69,7 +69,7 @@ public sealed class BlobDownloadService : IBlobDownloadService
                 response.Value.Details.ContentType,
                 null);
         }
-        catch (Azure.RequestFailedException ex) when (ex.Status == 404)
+        catch (global::Azure.RequestFailedException ex) when (ex.Status == 404)
         {
             return new BlobDownloadResult(false, null, null, "not found");
         }

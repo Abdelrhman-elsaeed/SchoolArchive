@@ -1,10 +1,11 @@
 using System.Text;
 using ArabicSchoolArchive.Api.Configuration;
+using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Options;
 
-namespace ArabicSchoolArchive.Api.Services;
+namespace ArabicSchoolArchive.Api.Clients.Azure;
 
 public sealed record BlobUploadResult(bool Success, string? FailureReason);
 
@@ -92,7 +93,7 @@ public sealed class BlobStorageService : IBlobStorageService
             await blob.UploadAsync(content, new BlobUploadOptions { HttpHeaders = headers }, cts.Token);
             return new BlobUploadResult(true, null);
         }
-        catch (Azure.RequestFailedException ex)
+        catch (global::Azure.RequestFailedException ex)
         {
             _logger.LogWarning(ex, "Azure Blob upload failed for {ObjectName}", objectName);
             return new BlobUploadResult(false, $"Azure error: {ex.Status}");
