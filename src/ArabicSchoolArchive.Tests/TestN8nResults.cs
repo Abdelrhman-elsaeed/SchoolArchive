@@ -1,4 +1,4 @@
-using ArabicSchoolArchive.Api.Services;
+using ArabicSchoolArchive.Api.Clients.N8n;
 
 namespace ArabicSchoolArchive.Tests;
 

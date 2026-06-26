@@ -3,7 +3,7 @@ using System.Net.Http.Headers;
 using ArabicSchoolArchive.Api.Configuration;
 using Microsoft.Extensions.Options;
 
-namespace ArabicSchoolArchive.Api.Services;
+namespace ArabicSchoolArchive.Api.Clients.N8n;
 
 public sealed record N8nResult(
     bool Success,
