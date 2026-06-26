@@ -1,4 +1,6 @@
 using System.Text.Json;
+using ArabicSchoolArchive.Api.Configuration;
+using ArabicSchoolArchive.Api.Shared;
 using ArabicSchoolArchive.Api.Shared.Audit;
 using ArabicSchoolArchive.Api.Subscriptions;
 using Microsoft.Extensions.Options;
@@ -41,21 +43,20 @@ public sealed class SubscriptionGuardMiddleware
             return;
         }
 
-        var schoolId = TryGetSchoolId(context);
-        if (!schoolId.HasValue || schoolId.Value == Guid.Empty)
+        if (!context.User.TryGetSchoolId(out var schoolId))
         {
             await _next(context);
             return;
         }
 
-        var status = await _store.GetAsync(schoolId.Value, context.RequestAborted);
+        var status = await _store.GetAsync(schoolId, context.RequestAborted);
         if (status.IsAllowed())
         {
             await _next(context);
             return;
         }
 
-        await WriteRejectionAsync(context, status, schoolId.Value);
+        await WriteRejectionAsync(context, status, schoolId);
     }
 
     private static bool ShouldSkip(HttpContext context)
@@ -63,18 +64,6 @@ public sealed class SubscriptionGuardMiddleware
         var path = context.Request.Path.Value ?? string.Empty;
         if (path.Equals("/health", StringComparison.OrdinalIgnoreCase)) return true;
         return false;
-    }
-
-    private static Guid? TryGetSchoolId(HttpContext context)
-    {
-        if (context.User?.Identity is null || !context.User.Identity.IsAuthenticated)
-        {
-            return null;
-        }
-        var claim = context.User.FindFirst("school_id")?.Value
-                    ?? context.User.FindFirst("schoolId")?.Value;
-        if (string.IsNullOrEmpty(claim)) return null;
-        return Guid.TryParse(claim, out var g) ? g : null;
     }
 
     private async Task WriteRejectionAsync(
@@ -89,8 +78,6 @@ public sealed class SubscriptionGuardMiddleware
             _ => (StatusCodes.Status403Forbidden, "SUBSCRIPTION_BLOCKED")
         };
 
-        var userId = TryGetUserId(context);
-
         _auditLog.Record(new AuditEvent
         {
             Action = ClassifyAction(context),
@@ -98,7 +85,7 @@ public sealed class SubscriptionGuardMiddleware
             ReasonCode = reasonCode,
             Message = $"Subscription state={status.State} for school {schoolId}",
             SchoolId = schoolId,
-            UserId = userId,
+            UserId = context.User.FindUserId(),
             HttpMethod = context.Request.Method,
             HttpPath = context.Request.Path.Value,
             HttpStatusCode = httpCode,
@@ -120,15 +107,6 @@ public sealed class SubscriptionGuardMiddleware
             schoolId = schoolId.ToString()
         });
         await context.Response.WriteAsync(body);
-    }
-
-    private static Guid? TryGetUserId(HttpContext context)
-    {
-        var claim = context.User.FindFirst("sub")?.Value
-                    ?? context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-                    ?? context.User.FindFirst("user_id")?.Value;
-        if (string.IsNullOrEmpty(claim)) return null;
-        return Guid.TryParse(claim, out var g) ? g : null;
     }
 
     private static AuditAction ClassifyAction(HttpContext context)

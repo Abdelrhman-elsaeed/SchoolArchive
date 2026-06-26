@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using ArabicSchoolArchive.Api.Configuration;
 using ArabicSchoolArchive.Api.Dtos;
 using ArabicSchoolArchive.Api.Services.Upload;
+using ArabicSchoolArchive.Api.Shared;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -37,16 +37,13 @@ public sealed class ArchiveUploadController : ControllerBase
         [FromForm] IFormFileCollection? files,
         CancellationToken cancellationToken)
     {
-        if (!TryGetSchoolId(out var schoolId))
+        if (!User.TryGetSchoolId(out var schoolId))
         {
             return StatusCode(StatusCodes.Status403Forbidden,
                 new ErrorResponse { Code = "TENANT_MISSING" });
         }
 
-        if (!TryGetUserId(out var userId))
-        {
-            userId = Guid.Empty;
-        }
+        var userId = User.FindUserId() ?? Guid.Empty;
 
         var hasFiles = files is not null && files.Count > 0;
         var hasSingle = file is not null && file.Length > 0;
@@ -77,23 +74,5 @@ public sealed class ArchiveUploadController : ControllerBase
         }
 
         return BadRequest(new ErrorResponse { Code = "EMPTY_BATCH" });
-    }
-
-    private bool TryGetSchoolId(out Guid schoolId)
-    {
-        schoolId = Guid.Empty;
-        var claim = User.FindFirstValue("school_id") ?? User.FindFirstValue("schoolId");
-        if (string.IsNullOrEmpty(claim)) return false;
-        return Guid.TryParse(claim, out schoolId);
-    }
-
-    private bool TryGetUserId(out Guid userId)
-    {
-        userId = Guid.Empty;
-        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                    ?? User.FindFirstValue("sub")
-                    ?? User.FindFirstValue("user_id");
-        if (string.IsNullOrEmpty(claim)) return false;
-        return Guid.TryParse(claim, out userId);
     }
 }

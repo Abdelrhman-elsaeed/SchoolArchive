@@ -4,26 +4,16 @@ using Microsoft.Extensions.Options;
 
 namespace ArabicSchoolArchive.Api.Clients.Azure;
 
-public sealed record BlobDownloadResult(bool Success, Stream? Content, string? ContentType, string? FailureReason);
-
-public interface IBlobDownloadService
-{
-    Task<BlobDownloadResult> OpenReadAsync(
-        Guid schoolId,
-        string blobObjectName,
-        CancellationToken cancellationToken);
-}
-
-public sealed class BlobDownloadService : IBlobDownloadService
+public sealed class AzureBlobDownloadClient : IBlobDownloadService
 {
     private readonly BlobServiceClient _blobServiceClient;
     private readonly BlobOptions _options;
-    private readonly ILogger<BlobDownloadService> _logger;
+    private readonly ILogger<AzureBlobDownloadClient> _logger;
 
-    public BlobDownloadService(
+    public AzureBlobDownloadClient(
         BlobServiceClient blobServiceClient,
         IOptions<BlobOptions> options,
-        ILogger<BlobDownloadService> logger)
+        ILogger<AzureBlobDownloadClient> logger)
     {
         _blobServiceClient = blobServiceClient;
         _options = options.Value;

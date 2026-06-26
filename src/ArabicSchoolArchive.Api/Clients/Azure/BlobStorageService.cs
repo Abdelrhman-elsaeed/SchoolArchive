@@ -7,33 +7,17 @@ using Microsoft.Extensions.Options;
 
 namespace ArabicSchoolArchive.Api.Clients.Azure;
 
-public sealed record BlobUploadResult(bool Success, string? FailureReason);
-
-public interface IBlobStorageService
-{
-    string BuildObjectName(Guid schoolId, Guid documentId, string originalName, DateTime uploadedAtUtc);
-    string BuildSafeName(string originalName);
-    Task<BlobUploadResult> UploadAsync(
-        Guid schoolId,
-        Guid documentId,
-        string originalName,
-        string contentType,
-        Stream content,
-        DateTime uploadedAtUtc,
-        CancellationToken cancellationToken);
-}
-
-public sealed class BlobStorageService : IBlobStorageService
+public sealed class AzureBlobStorageClient : IBlobStorageService
 {
     private readonly BlobServiceClient _blobServiceClient;
     private readonly BlobOptions _options;
-    private readonly ILogger<BlobStorageService> _logger;
+    private readonly ILogger<AzureBlobStorageClient> _logger;
     private readonly string _containerName;
 
-    public BlobStorageService(
+    public AzureBlobStorageClient(
         BlobServiceClient blobServiceClient,
         IOptions<BlobOptions> options,
-        ILogger<BlobStorageService> logger)
+        ILogger<AzureBlobStorageClient> logger)
     {
         _blobServiceClient = blobServiceClient;
         _options = options.Value;

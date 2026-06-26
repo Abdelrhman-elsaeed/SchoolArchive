@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using ArabicSchoolArchive.Api.Configuration;
+using ArabicSchoolArchive.Api.Shared;
 using ArabicSchoolArchive.Api.Shared.Audit;
 using Microsoft.Extensions.Options;
 
@@ -74,7 +75,7 @@ public sealed class RateLimitMiddleware
                 Outcome = AuditOutcome.RateLimited,
                 ReasonCode = "RATE_LIMITED",
                 Message = $"Per-{policy} cap exceeded ({limit} per minute)",
-                SchoolId = TryGetSchoolId(context),
+                SchoolId = context.User.TryGetSchoolId(out var sid) ? sid : null,
                 HttpMethod = context.Request.Method,
                 HttpPath = context.Request.Path.Value,
                 HttpStatusCode = StatusCodes.Status429TooManyRequests,
@@ -113,21 +114,12 @@ public sealed class RateLimitMiddleware
 
     private static string ResolveKey(HttpContext context)
     {
-        var schoolId = TryGetSchoolId(context);
-        if (schoolId.HasValue && schoolId.Value != Guid.Empty)
+        if (context.User.TryGetSchoolId(out var schoolId) && schoolId != Guid.Empty)
         {
-            return schoolId.Value.ToString("N");
+            return schoolId.ToString("N");
         }
         var ip = context.Connection.RemoteIpAddress?.ToString();
         return "ip:" + (ip ?? "unknown");
-    }
-
-    private static Guid? TryGetSchoolId(HttpContext context)
-    {
-        var claim = context.User.FindFirst("school_id")?.Value
-                    ?? context.User.FindFirst("schoolId")?.Value;
-        if (string.IsNullOrEmpty(claim)) return null;
-        return Guid.TryParse(claim, out var g) ? g : null;
     }
 
     private void MaybeCleanup()

@@ -1,12 +1,5 @@
 namespace ArabicSchoolArchive.Api.Dtos;
 
-public enum UploadStatus
-{
-    Success,
-    Rejected,
-    Failed
-}
-
 public sealed class SingleFileUploadResponse
 {
     public string OriginalName { get; set; } = string.Empty;
@@ -26,10 +19,4 @@ public sealed class BatchUploadResponse
     public int SuccessfulFiles { get; set; }
     public int FailedFiles { get; set; }
     public List<SingleFileUploadResponse> Results { get; set; } = new();
-}
-
-public sealed class ErrorResponse
-{
-    public string Code { get; set; } = string.Empty;
-    public string? RequestId { get; set; }
 }

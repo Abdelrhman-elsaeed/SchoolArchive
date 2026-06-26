@@ -9,21 +9,6 @@ using Microsoft.Extensions.Options;
 
 namespace ArabicSchoolArchive.Api.Services.Upload;
 
-public interface IUploadOrchestrator
-{
-    Task<SingleFileUploadResponse> UploadAsync(
-        IFormFile file,
-        Guid schoolId,
-        Guid userId,
-        CancellationToken cancellationToken);
-
-    Task<BatchUploadResponse> UploadBatchAsync(
-        IReadOnlyList<IFormFile> files,
-        Guid schoolId,
-        Guid userId,
-        CancellationToken cancellationToken);
-}
-
 public sealed class UploadOrchestrator : IUploadOrchestrator
 {
     private readonly IFileValidator _validator;
@@ -146,7 +131,7 @@ public sealed class UploadOrchestrator : IUploadOrchestrator
                 Action = AuditAction.Upload,
                 Outcome = AuditOutcome.Failed,
                 ReasonCode = n8nResult.ReasonCode,
-                Message = TranslateN8nFailure(n8nResult.ReasonCode),
+                Message = MapN8nFailureMessage(n8nResult.ReasonCode),
                 SchoolId = schoolId,
                 UserId = userId,
                 DocumentId = documentId,
@@ -157,7 +142,7 @@ public sealed class UploadOrchestrator : IUploadOrchestrator
                 OriginalName = originalName,
                 Status = nameof(UploadStatus.Failed),
                 ReasonCode = n8nResult.ReasonCode,
-                Message = TranslateN8nFailure(n8nResult.ReasonCode),
+                Message = MapN8nFailureMessage(n8nResult.ReasonCode),
                 DocumentId = documentId,
                 Category = null,
                 SizeBytes = file.Length,
@@ -283,7 +268,7 @@ public sealed class UploadOrchestrator : IUploadOrchestrator
         };
     }
 
-    private static string TranslateN8nFailure(string? reasonCode) => reasonCode switch
+    private static string MapN8nFailureMessage(string? reasonCode) => reasonCode switch
     {
         "N8N_TIMEOUT" => "استغرق تصنيف الملف وقتاً طويلاً. يرجى المحاولة لاحقاً",
         "N8N_HTTP_ERROR" => "تعذر الوصول إلى خدمة التصنيف. يرجى المحاولة لاحقاً",

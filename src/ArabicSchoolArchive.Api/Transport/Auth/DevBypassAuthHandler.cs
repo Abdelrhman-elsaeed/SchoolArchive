@@ -78,7 +78,3 @@ public sealed class DevBypassAuthHandler : AuthenticationHandler<DevBypassAuthOp
         return Task.FromResult(AuthenticateResult.Success(ticket));
     }
 }
-
-public sealed class DevBypassAuthOptions : AuthenticationSchemeOptions
-{
-}

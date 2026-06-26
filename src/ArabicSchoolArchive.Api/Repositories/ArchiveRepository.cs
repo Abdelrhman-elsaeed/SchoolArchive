@@ -4,11 +4,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ArabicSchoolArchive.Api.Repositories;
 
-public interface IArchiveRepository
-{
-    Task SaveAsync(Archive archive, CancellationToken cancellationToken);
-}
-
 public sealed class ArchiveRepository : IArchiveRepository
 {
     private readonly ArchiveDbContext _db;

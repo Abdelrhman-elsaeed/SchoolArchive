@@ -5,12 +5,12 @@ namespace ArabicSchoolArchive.Tests.Services;
 
 public class BlobStorageServiceSafeNameTests
 {
-    private readonly BlobStorageService _service = MakeService();
+    private readonly AzureBlobStorageClient _service = MakeService();
 
-    private static BlobStorageService MakeService() => new(
+    private static AzureBlobStorageClient MakeService() => new(
         new Azure.Storage.Blobs.BlobServiceClient("UseDevelopmentStorage=true;"),
         Microsoft.Extensions.Options.Options.Create(new ArabicSchoolArchive.Api.Configuration.BlobOptions()),
-        Microsoft.Extensions.Logging.Abstractions.NullLogger<BlobStorageService>.Instance);
+        Microsoft.Extensions.Logging.Abstractions.NullLogger<AzureBlobStorageClient>.Instance);
 
     [Fact]
     public void SafeName_ReplacesSpacesWithUnderscore()
@@ -76,10 +76,10 @@ public class BlobStorageServiceSafeNameTests
             {
                 ConnectionString = "AccountName=devstoreaccount1;AccountKey=***"
             });
-        var gen = new ArabicSchoolArchive.Api.Clients.Azure.BlobSasGenerator(
+        var gen = new ArabicSchoolArchive.Api.Clients.Azure.AzureBlobSasClient(
             new Azure.Storage.Blobs.BlobServiceClient("UseDevelopmentStorage=true;"),
             options,
-            Microsoft.Extensions.Logging.Abstractions.NullLogger<ArabicSchoolArchive.Api.Clients.Azure.BlobSasGenerator>.Instance);
+            Microsoft.Extensions.Logging.Abstractions.NullLogger<ArabicSchoolArchive.Api.Clients.Azure.AzureBlobSasClient>.Instance);
 
         var school = Guid.NewGuid();
         var docId = Guid.NewGuid();

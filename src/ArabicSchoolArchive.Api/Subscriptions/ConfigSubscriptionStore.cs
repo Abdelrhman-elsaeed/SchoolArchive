@@ -1,3 +1,4 @@
+using ArabicSchoolArchive.Api.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace ArabicSchoolArchive.Api.Subscriptions;

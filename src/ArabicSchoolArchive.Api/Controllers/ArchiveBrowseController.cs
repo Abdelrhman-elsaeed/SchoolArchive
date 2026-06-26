@@ -1,10 +1,12 @@
-using System.Security.Claims;
 using ArabicSchoolArchive.Api.Clients.Azure;
+using ArabicSchoolArchive.Api.Configuration;
 using ArabicSchoolArchive.Api.Dtos;
 using ArabicSchoolArchive.Api.Repositories;
+using ArabicSchoolArchive.Api.Shared;
 using ArabicSchoolArchive.Api.Shared.Audit;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace ArabicSchoolArchive.Api.Controllers;
 
@@ -19,7 +21,7 @@ public sealed class ArchiveBrowseController : ControllerBase
     private readonly IAuditLog _auditLog;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<ArchiveBrowseController> _logger;
-    private readonly IConfiguration _configuration;
+    private readonly LocalDevOptions _localDevOptions;
     private readonly IWebHostEnvironment _environment;
 
     public ArchiveBrowseController(
@@ -29,7 +31,7 @@ public sealed class ArchiveBrowseController : ControllerBase
         IAuditLog auditLog,
         TimeProvider timeProvider,
         ILogger<ArchiveBrowseController> logger,
-        IConfiguration configuration,
+        IOptions<LocalDevOptions> localDevOptions,
         IWebHostEnvironment environment)
     {
         _readRepository = readRepository;
@@ -38,7 +40,7 @@ public sealed class ArchiveBrowseController : ControllerBase
         _auditLog = auditLog;
         _timeProvider = timeProvider;
         _logger = logger;
-        _configuration = configuration;
+        _localDevOptions = localDevOptions.Value;
         _environment = environment;
     }
 
@@ -47,7 +49,7 @@ public sealed class ArchiveBrowseController : ControllerBase
         [FromQuery] ArchiveListQuery query,
         CancellationToken cancellationToken)
     {
-        if (!TryGetSchoolId(out var schoolId))
+        if (!User.TryGetSchoolId(out var schoolId))
         {
             return StatusCode(StatusCodes.Status403Forbidden,
                 new ErrorResponse { Code = "TENANT_MISSING" });
@@ -56,6 +58,7 @@ public sealed class ArchiveBrowseController : ControllerBase
         var (items, total) = await _readRepository.ListAsync(
             schoolId, query ?? new ArchiveListQuery(), cancellationToken);
 
+        // Pagination is normalised inside the repository; derive display values from the query.
         var page = query?.Page < 1 ? 1 : (query?.Page ?? 1);
         var pageSize = query?.PageSize < 1 ? 20 : (query?.PageSize ?? 20);
         if (pageSize > 100) pageSize = 100;
@@ -66,7 +69,7 @@ public sealed class ArchiveBrowseController : ControllerBase
             Action = AuditAction.BrowseList,
             Outcome = AuditOutcome.Success,
             SchoolId = schoolId,
-            UserId = TryGetUserId(),
+            UserId = User.FindUserId(),
             HttpMethod = HttpContext.Request.Method,
             HttpPath = HttpContext.Request.Path.Value,
             HttpStatusCode = StatusCodes.Status200OK,
@@ -88,7 +91,7 @@ public sealed class ArchiveBrowseController : ControllerBase
         Guid documentId,
         CancellationToken cancellationToken)
     {
-        if (!TryGetSchoolId(out var schoolId))
+        if (!User.TryGetSchoolId(out var schoolId))
         {
             return StatusCode(StatusCodes.Status403Forbidden,
                 new ErrorResponse { Code = "TENANT_MISSING" });
@@ -104,7 +107,7 @@ public sealed class ArchiveBrowseController : ControllerBase
                 Outcome = AuditOutcome.ForbiddenTenantAccess,
                 ReasonCode = "ARCHIVE_NOT_FOUND",
                 SchoolId = schoolId,
-                UserId = TryGetUserId(),
+                UserId = User.FindUserId(),
                 DocumentId = documentId,
                 HttpMethod = HttpContext.Request.Method,
                 HttpPath = HttpContext.Request.Path.Value,
@@ -119,7 +122,7 @@ public sealed class ArchiveBrowseController : ControllerBase
             Action = AuditAction.BrowseGetById,
             Outcome = AuditOutcome.Success,
             SchoolId = schoolId,
-            UserId = TryGetUserId(),
+            UserId = User.FindUserId(),
             DocumentId = documentId,
             OriginalName = item.OriginalName,
             HttpMethod = HttpContext.Request.Method,
@@ -136,7 +139,7 @@ public sealed class ArchiveBrowseController : ControllerBase
         Guid documentId,
         CancellationToken cancellationToken)
     {
-        if (!TryGetSchoolId(out var schoolId))
+        if (!User.TryGetSchoolId(out var schoolId))
         {
             return StatusCode(StatusCodes.Status403Forbidden,
                 new ErrorResponse { Code = "TENANT_MISSING" });
@@ -152,7 +155,7 @@ public sealed class ArchiveBrowseController : ControllerBase
                 Outcome = AuditOutcome.ForbiddenTenantAccess,
                 ReasonCode = "ARCHIVE_NOT_FOUND",
                 SchoolId = schoolId,
-                UserId = TryGetUserId(),
+                UserId = User.FindUserId(),
                 DocumentId = documentId,
                 HttpMethod = HttpContext.Request.Method,
                 HttpPath = HttpContext.Request.Path.Value,
@@ -170,7 +173,7 @@ public sealed class ArchiveBrowseController : ControllerBase
             Action = AuditAction.BrowseDownload,
             Outcome = AuditOutcome.Success,
             SchoolId = schoolId,
-            UserId = TryGetUserId(),
+            UserId = User.FindUserId(),
             DocumentId = documentId,
             OriginalName = item.OriginalName,
             HttpMethod = HttpContext.Request.Method,
@@ -194,15 +197,13 @@ public sealed class ArchiveBrowseController : ControllerBase
         Guid documentId,
         CancellationToken cancellationToken)
     {
-        var streamEnabled =
-            _environment.IsDevelopment()
-            && _configuration.GetValue("LocalDev:DownloadStreamEnabled", false);
+        var streamEnabled = _environment.IsDevelopment() && _localDevOptions.DownloadStreamEnabled;
         if (!streamEnabled)
         {
             return NotFound(new ErrorResponse { Code = "ARCHIVE_NOT_FOUND" });
         }
 
-        if (!TryGetSchoolId(out var schoolId))
+        if (!User.TryGetSchoolId(out var schoolId))
         {
             return StatusCode(StatusCodes.Status403Forbidden,
                 new ErrorResponse { Code = "TENANT_MISSING" });
@@ -218,7 +219,7 @@ public sealed class ArchiveBrowseController : ControllerBase
                 Outcome = AuditOutcome.ForbiddenTenantAccess,
                 ReasonCode = "ARCHIVE_NOT_FOUND",
                 SchoolId = schoolId,
-                UserId = TryGetUserId(),
+                UserId = User.FindUserId(),
                 DocumentId = documentId,
                 HttpMethod = HttpContext.Request.Method,
                 HttpPath = HttpContext.Request.Path.Value,
@@ -240,7 +241,7 @@ public sealed class ArchiveBrowseController : ControllerBase
             Action = AuditAction.BrowseContent,
             Outcome = AuditOutcome.Success,
             SchoolId = schoolId,
-            UserId = TryGetUserId(),
+            UserId = User.FindUserId(),
             DocumentId = documentId,
             OriginalName = item.OriginalName,
             HttpMethod = HttpContext.Request.Method,
@@ -251,22 +252,5 @@ public sealed class ArchiveBrowseController : ControllerBase
 
         return File(result.Content, result.ContentType ?? "application/octet-stream",
             item.OriginalName);
-    }
-
-    private Guid? TryGetUserId()
-    {
-        var claim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-                    ?? User.FindFirst("sub")?.Value
-                    ?? User.FindFirst("user_id")?.Value;
-        if (string.IsNullOrEmpty(claim)) return null;
-        return Guid.TryParse(claim, out var g) ? g : null;
-    }
-
-    private bool TryGetSchoolId(out Guid schoolId)
-    {
-        schoolId = Guid.Empty;
-        var claim = User.FindFirstValue("school_id") ?? User.FindFirstValue("schoolId");
-        if (string.IsNullOrEmpty(claim)) return false;
-        return Guid.TryParse(claim, out schoolId);
     }
 }

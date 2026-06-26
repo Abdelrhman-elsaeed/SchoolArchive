@@ -6,25 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace ArabicSchoolArchive.Api.Clients.Azure;
 
-public sealed record BlobSasDescriptor(
-    Guid DocumentId,
-    string BlobObjectName,
-    Uri SignedUri,
-    DateTime ExpiresAtUtc,
-    int TtlMinutes);
-
-public interface IBlobSasGenerator
-{
-    BlobSasDescriptor GenerateRead(
-        Guid schoolId,
-        Guid documentId,
-        string blobObjectName,
-        DateTime nowUtc);
-
-    int TtlMinutes { get; }
-}
-
-public sealed class BlobSasGenerator : IBlobSasGenerator
+public sealed class AzureBlobSasClient : IBlobSasGenerator
 {
     private const string AzuriteAccountName = "devstoreaccount1";
     private const string AzuriteAccountKey =
@@ -32,12 +14,12 @@ public sealed class BlobSasGenerator : IBlobSasGenerator
 
     private readonly BlobServiceClient _blobServiceClient;
     private readonly BlobOptions _options;
-    private readonly ILogger<BlobSasGenerator> _logger;
+    private readonly ILogger<AzureBlobSasClient> _logger;
 
-    public BlobSasGenerator(
+    public AzureBlobSasClient(
         BlobServiceClient blobServiceClient,
         IOptions<BlobOptions> options,
-        ILogger<BlobSasGenerator> logger)
+        ILogger<AzureBlobSasClient> logger)
     {
         _blobServiceClient = blobServiceClient;
         _options = options.Value;
