@@ -2,6 +2,7 @@ using System.Text;
 using ArabicSchoolArchive.Api.Configuration;
 using ArabicSchoolArchive.Api.Data;
 using ArabicSchoolArchive.Api.Middleware;
+using ArabicSchoolArchive.Api.Repositories;
 using ArabicSchoolArchive.Api.Services;
 using ArabicSchoolArchive.Api.Subscriptions;
 using Azure.Storage.Blobs;
