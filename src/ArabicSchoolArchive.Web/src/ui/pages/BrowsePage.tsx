@@ -6,7 +6,7 @@ import {
   Network,
   ShieldCheck,
 } from "lucide-react";
-import { useArchiveList } from "../../api/hooks/useArchives";
+import { useArchiveList } from "../../state/useArchives";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { SegmentedToggle, Alert } from "../components";
 import { SmartExplorerView } from "../archive/SmartExplorerView";

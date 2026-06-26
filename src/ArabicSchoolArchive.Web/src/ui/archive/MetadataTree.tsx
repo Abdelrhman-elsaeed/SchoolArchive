@@ -5,8 +5,8 @@ import type {
   YearFacet,
   FileTypeFacet,
   TagFacet,
-} from "../../api/hooks/useArchiveFacets";
-import { fileTypeLabel } from "../../api/hooks/useArchiveFacets";
+} from "../../state/useArchiveFacets";
+import { fileTypeLabel } from "../../state/useArchiveFacets";
 
 export type MetadataSectionId =
   | "categories"

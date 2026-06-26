@@ -7,7 +7,7 @@ import {
   ArrowUp,
 } from "lucide-react";
 import { UploadProgressBar } from "./UploadProgressBar";
-import type { UploadItemStatus } from "../../api/hooks/useUploadQueue";
+import type { UploadItemStatus } from "../../state/useUploadQueue";
 
 interface UploadBatchSummaryProps {
   total: number;

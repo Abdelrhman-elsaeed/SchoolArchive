@@ -2,7 +2,7 @@
 // from `node --test` without dragging React/TSX context modules into
 // the test runner.
 
-import type { ArchiveItem } from "./contracts";
+import type { ArchiveItem } from "../api/contracts";
 
 export interface CategoryFacet {
   name: string;

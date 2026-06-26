@@ -10,7 +10,7 @@ import {
   Clock,
   Sparkles,
 } from "lucide-react";
-import type { UploadItem } from "../../api/hooks/useUploadQueue";
+import type { UploadItem } from "../../state/useUploadQueue";
 import { getStatusMeta } from "../upload/statusMeta";
 import { Tag } from "./Tag";
 import { UploadProgressBar } from "./UploadProgressBar";

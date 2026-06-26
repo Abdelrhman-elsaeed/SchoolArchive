@@ -17,7 +17,7 @@ import {
   Printer,
   Eye,
 } from "lucide-react";
-import { useArchiveById, useArchiveDownloadUrl } from "../../api/hooks/useArchives";
+import { useArchiveById, useArchiveDownloadUrl } from "../../state/useArchives";
 import { useApi } from "../../api/ApiClientContext";
 import { useLocalDev } from "../../api/LocalDevContext";
 import type { ApiError } from "../../api/ApiClient";

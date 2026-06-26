@@ -1,13 +1,13 @@
 import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useApi } from "../ApiClientContext";
-import { ArchiveService, type ListArchivesQuery } from "../ArchiveService";
+import { useApi } from "../api/ApiClientContext";
+import { ArchiveService, type ListArchivesQuery } from "../api/ArchiveService";
 import type {
   ArchiveDownloadResponse,
   ArchiveItem,
   ArchiveListResponse,
   BatchUploadResponse,
-} from "../contracts";
+} from "../api/contracts";
 
 export const archiveKeys = {
   all: ["archives"] as const,
@@ -51,7 +51,7 @@ export function useArchiveDownloadUrl(documentId: string) {
   });
 }
 
-export function useUploadBatch() {
+export function useArchiveBatchUpload() {
   const service = useArchiveService();
   const queryClient = useQueryClient();
   return useMutation<BatchUploadResponse, Error, File[]>({

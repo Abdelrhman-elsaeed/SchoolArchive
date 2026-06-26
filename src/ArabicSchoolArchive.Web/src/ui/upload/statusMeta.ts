@@ -1,4 +1,4 @@
-import type { UploadItemStatus } from "../../api/hooks/useUploadQueue";
+import type { UploadItemStatus } from "../../state/useUploadQueue";
 import type { TagTone } from "../components/Tag";
 
 export interface StatusMeta {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, ListChecks, Sparkles, CheckCircle2, AlertCircle, Clock } from "lucide-react";
-import type { UploadItem, UploadItemStatus } from "../../api/hooks/useUploadQueue";
+import type { UploadItem, UploadItemStatus } from "../../state/useUploadQueue";
 import { UploadQueueItem } from "./UploadQueueItem";
 
 type Filter = "all" | "active" | "completed" | "failed";

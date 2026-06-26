@@ -9,7 +9,7 @@ import {
   Sparkles,
   CheckCircle2,
 } from "lucide-react";
-import { useUploadQueue } from "../../api/hooks/useUploadQueue";
+import { useUploadQueue } from "../../state/useUploadQueue";
 import type { ApiError } from "../../api/ApiClient";
 import {
   Alert,

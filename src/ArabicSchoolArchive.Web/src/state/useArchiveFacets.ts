@@ -1,14 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { useApi } from "../ApiClientContext";
-import { ArchiveService, type ListArchivesQuery } from "../ArchiveService";
-import type { ArchiveListResponse } from "../contracts";
+import { useApi } from "../api/ApiClientContext";
+import { ArchiveService, type ListArchivesQuery } from "../api/ArchiveService";
+import type { ArchiveListResponse } from "../api/contracts";
 import {
   buildFacets,
-  fileTypeLabel,
-  getMonthNameAr,
   type ArchiveFacets,
-} from "../facets";
+} from "../shared/facets";
 
 export type {
   ArchiveFacets,
@@ -17,8 +15,8 @@ export type {
   MonthFacet,
   FileTypeFacet,
   TagFacet,
-} from "../facets";
-export { fileTypeLabel, getMonthNameAr };
+} from "../shared/facets";
+export { fileTypeLabel, getMonthNameAr } from "../shared/facets";
 
 const FACET_PAGE_SIZE = 200;
 

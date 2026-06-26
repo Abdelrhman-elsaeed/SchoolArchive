@@ -16,7 +16,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { BUILTIN_VIEWS, filtersEqual, viewById } from "../src/ui/archive/savedViews.ts";
-import { buildFacets, getMonthNameAr } from "../src/api/facets.ts";
+import { buildFacets, getMonthNameAr } from "../src/shared/facets.ts";
 import {
   applyOpenGraph,
   applySelectDocument,

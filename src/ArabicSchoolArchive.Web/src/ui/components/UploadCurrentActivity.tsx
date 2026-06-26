@@ -7,7 +7,7 @@ import {
   Sparkles,
   AlertCircle,
 } from "lucide-react";
-import type { UploadItem } from "../../api/hooks/useUploadQueue";
+import type { UploadItem } from "../../state/useUploadQueue";
 import { getStatusMeta } from "../upload/statusMeta";
 import { Button } from "./Button";
 import { Tag } from "./Tag";

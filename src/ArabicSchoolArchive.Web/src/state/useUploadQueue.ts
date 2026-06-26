@@ -33,10 +33,10 @@ import {
   useRef,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useApi } from "../ApiClientContext";
+import { useApi } from "../api/ApiClientContext";
 import { archiveKeys } from "./useArchives";
-import { ArchiveService } from "../ArchiveService";
-import type { SingleFileUploadResponse } from "../contracts";
+import { ArchiveService } from "../api/ArchiveService";
+import type { SingleFileUploadResponse } from "../api/contracts";
 
 /* ─── Public types ────────────────────────────────────────────────── */
 
