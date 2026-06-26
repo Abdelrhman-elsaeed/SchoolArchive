@@ -1,4 +1,5 @@
 using System.Text;
+using ArabicSchoolArchive.Api.Shared.Logging;
 
 namespace ArabicSchoolArchive.Api.Services;
 

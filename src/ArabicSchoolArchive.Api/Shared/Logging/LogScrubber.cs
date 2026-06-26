@@ -1,7 +1,6 @@
-using System.Text;
 using System.Text.RegularExpressions;
 
-namespace ArabicSchoolArchive.Api.Services;
+namespace ArabicSchoolArchive.Api.Shared.Logging;
 
 public static class LogScrubber
 {
