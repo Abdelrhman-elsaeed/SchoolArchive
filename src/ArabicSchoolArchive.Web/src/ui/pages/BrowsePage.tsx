@@ -7,7 +7,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { useArchiveList } from "../../state/useArchives";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { useDebouncedValue } from "../../shared/useDebouncedValue";
 import { SegmentedToggle, Alert } from "../components";
 import { SmartExplorerView } from "../archive/SmartExplorerView";
 import { ColumnNavigatorView } from "../archive/ColumnNavigatorView";

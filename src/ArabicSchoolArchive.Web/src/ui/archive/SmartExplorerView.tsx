@@ -15,7 +15,7 @@ import { useArchiveList } from "../../state/useArchives";
 import { useArchiveFacets, getMonthNameAr, fileTypeLabel } from "../../state/useArchiveFacets";
 import type { ListArchivesQuery } from "../../api/ArchiveService";
 import type { ArchiveItem } from "../../api/contracts";
-import { useDebouncedValue } from "../../hooks/useDebouncedValue";
+import { useDebouncedValue } from "../../shared/useDebouncedValue";
 import { Input, Select, Button, Loading, EmptyState } from "../components";
 import { MetadataTree } from "./MetadataTree";
 import { SavedViewTabs } from "./SavedViewTabs";
