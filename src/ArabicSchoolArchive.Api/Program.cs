@@ -7,6 +7,7 @@ using ArabicSchoolArchive.Api.Middleware;
 using ArabicSchoolArchive.Api.Repositories;
 using ArabicSchoolArchive.Api.Services;
 using ArabicSchoolArchive.Api.Subscriptions;
+using ArabicSchoolArchive.Api.Transport.Auth;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;

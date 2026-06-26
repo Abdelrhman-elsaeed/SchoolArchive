@@ -4,7 +4,7 @@ using ArabicSchoolArchive.Api.Configuration;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 
-namespace ArabicSchoolArchive.Api.Services;
+namespace ArabicSchoolArchive.Api.Transport.Auth;
 
 /// <summary>
 /// Phase 2.5 - Development-only authentication scheme.

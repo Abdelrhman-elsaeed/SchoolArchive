@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using ArabicSchoolArchive.Api.Configuration;
-using ArabicSchoolArchive.Api.Services;
+using ArabicSchoolArchive.Api.Transport.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
