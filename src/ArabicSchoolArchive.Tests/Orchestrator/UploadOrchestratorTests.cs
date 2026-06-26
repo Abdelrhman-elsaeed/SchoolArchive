@@ -6,6 +6,7 @@ using ArabicSchoolArchive.Api.Dtos;
 using ArabicSchoolArchive.Api.Entities;
 using ArabicSchoolArchive.Api.Repositories;
 using ArabicSchoolArchive.Api.Services;
+using ArabicSchoolArchive.Api.Shared.Audit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;

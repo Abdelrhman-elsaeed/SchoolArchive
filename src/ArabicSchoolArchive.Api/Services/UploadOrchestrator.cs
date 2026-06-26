@@ -4,6 +4,7 @@ using ArabicSchoolArchive.Api.Configuration;
 using ArabicSchoolArchive.Api.Dtos;
 using ArabicSchoolArchive.Api.Entities;
 using ArabicSchoolArchive.Api.Repositories;
+using ArabicSchoolArchive.Api.Shared.Audit;
 using Microsoft.Extensions.Options;
 
 namespace ArabicSchoolArchive.Api.Services;

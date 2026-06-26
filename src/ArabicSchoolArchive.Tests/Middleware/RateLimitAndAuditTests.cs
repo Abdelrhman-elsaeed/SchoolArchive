@@ -5,6 +5,7 @@ using System.Text.Json;
 using ArabicSchoolArchive.Api.Clients.Azure;
 using ArabicSchoolArchive.Api.Clients.N8n;
 using ArabicSchoolArchive.Api.Services;
+using ArabicSchoolArchive.Api.Shared.Audit;
 using ArabicSchoolArchive.Api.Shared.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;

@@ -1,7 +1,7 @@
 using System.Text;
 using ArabicSchoolArchive.Api.Shared.Logging;
 
-namespace ArabicSchoolArchive.Api.Services;
+namespace ArabicSchoolArchive.Api.Shared.Audit;
 
 public enum AuditOutcome
 {

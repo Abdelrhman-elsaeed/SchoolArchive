@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using ArabicSchoolArchive.Api.Configuration;
-using ArabicSchoolArchive.Api.Services;
+using ArabicSchoolArchive.Api.Shared.Audit;
 using Microsoft.Extensions.Options;
 
 namespace ArabicSchoolArchive.Api.Middleware;
