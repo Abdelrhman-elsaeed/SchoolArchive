@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using ArabicSchoolArchive.Api.Configuration;
 using ArabicSchoolArchive.Api.Dtos;
-using ArabicSchoolArchive.Api.Services;
+using ArabicSchoolArchive.Api.Services.Upload;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;

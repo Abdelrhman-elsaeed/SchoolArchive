@@ -6,6 +6,7 @@ using ArabicSchoolArchive.Api.Data;
 using ArabicSchoolArchive.Api.Middleware;
 using ArabicSchoolArchive.Api.Repositories;
 using ArabicSchoolArchive.Api.Services;
+using ArabicSchoolArchive.Api.Services.Upload;
 using ArabicSchoolArchive.Api.Shared.Audit;
 using ArabicSchoolArchive.Api.Subscriptions;
 using ArabicSchoolArchive.Api.Transport.Auth;

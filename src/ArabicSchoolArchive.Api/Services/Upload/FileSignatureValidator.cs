@@ -1,4 +1,4 @@
-namespace ArabicSchoolArchive.Api.Services;
+namespace ArabicSchoolArchive.Api.Services.Upload;
 
 public sealed record MagicBytesResult(
     bool IsValid,

@@ -4,7 +4,7 @@ using ArabicSchoolArchive.Api.Configuration;
 using ArabicSchoolArchive.Api.Data;
 using ArabicSchoolArchive.Api.Dtos;
 using ArabicSchoolArchive.Api.Repositories;
-using ArabicSchoolArchive.Api.Services;
+using ArabicSchoolArchive.Api.Services.Upload;
 using ArabicSchoolArchive.Api.Shared.Audit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;

@@ -7,7 +7,7 @@ using ArabicSchoolArchive.Api.Repositories;
 using ArabicSchoolArchive.Api.Shared.Audit;
 using Microsoft.Extensions.Options;
 
-namespace ArabicSchoolArchive.Api.Services;
+namespace ArabicSchoolArchive.Api.Services.Upload;
 
 public interface IUploadOrchestrator
 {

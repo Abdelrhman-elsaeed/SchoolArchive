@@ -1,7 +1,6 @@
 using ArabicSchoolArchive.Api.Configuration;
-using Microsoft.Extensions.Options;
 
-namespace ArabicSchoolArchive.Api.Services;
+namespace ArabicSchoolArchive.Api.Services.Upload;
 
 public sealed record ValidationResult(bool IsValid, string? ReasonCode, string? Message);
 
