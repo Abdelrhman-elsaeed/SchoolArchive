@@ -1,5 +1,3 @@
-import type { CSSProperties } from "react";
-
 export type UploadProgressBarTone = "palm" | "tan" | "maroon" | "neutral" | "ink";
 
 interface UploadProgressBarProps {
@@ -84,5 +82,4 @@ export function UploadProgressBar({
   );
 }
 
-/** Re-export the cubic-bezier easing for inline use. */
-export const progressEasing: CSSProperties = {};
+
