@@ -1,7 +1,7 @@
 using ArabicSchoolArchive.Api.Data;
 using ArabicSchoolArchive.Api.Dtos;
 using ArabicSchoolArchive.Api.Entities;
-using ArabicSchoolArchive.Api.Services;
+using ArabicSchoolArchive.Api.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

@@ -3,7 +3,7 @@ using ArabicSchoolArchive.Api.Dtos;
 using ArabicSchoolArchive.Api.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace ArabicSchoolArchive.Api.Services;
+namespace ArabicSchoolArchive.Api.Repositories;
 
 public interface IArchiveReadRepository
 {
